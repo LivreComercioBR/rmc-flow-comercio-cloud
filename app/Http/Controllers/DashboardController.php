@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Customer;
+use App\Models\AccountPayable;
+use App\Models\CashSession;
+use App\Models\AccountReceivable;
+use App\Models\CompanyMembership;
+use App\Services\Cash\CashRegisterService;
+use App\Support\CompanyContext;
+use Illuminate\View\View;
+use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+
+final class DashboardController extends Controller
+{
+    public function __invoke(CompanyContext $companyContext, CashRegisterService $cash, Request $request): View
+    {
+        $company = $companyContext->company();
+        abort_unless($company, 403);
+        $role = CompanyMembership::query()->where('company_id', $company->id)->where('user_id', auth()->id())->where('status', 'active')->value('role');
+        $servicesEnabled = (bool) $company->modules()->where('module_key', 'services')->where('enabled', true)->exists();
+        $canAccessServiceCatalog = $servicesEnabled && in_array($role, ['Administrador', 'Mecânico'], true);
+        $customerCount = Customer::query()->where('company_id', $company->id)->where('status', 'active')->count();
+        $productCount = \App\Models\Product::query()->where('status', 'active')->count();
+        $lowStockCount = \App\Models\Product::query()->where('status', 'active')->where('minimum_stock', '>', 0)->whereColumn('stock_quantity', '<=', 'minimum_stock')->count();
+        $openPayableCents = (int) AccountPayable::query()->whereIn('status', ['pending', 'partial'])
+            ->selectRaw('COALESCE(SUM(amount_cents - paid_cents - cancelled_balance_cents), 0) as total')->value('total');
+        $overduePayables = AccountPayable::query()->whereIn('status', ['pending', 'partial'])->where('due_date', '<', now()->toDateString())->count();
+        $openReceivableCents = (int) AccountReceivable::query()->whereIn('status', ['pending', 'partial'])->selectRaw('COALESCE(SUM(amount_cents - paid_cents - cancelled_balance_cents), 0) as total')->value('total');
+        $overdueReceivables = AccountReceivable::query()->whereIn('status', ['pending', 'partial'])->where('due_date', '<', now()->toDateString())->count();
+        $openCashSession = CashSession::query()->where('status', 'open')->first();
+        $cashBalanceCents = $openCashSession ? $cash->expectedBalance($openCashSession) : null;
+
+        $hideValues = (bool) $request->session()->get('dashboard.hide_values.'.$company->id, false);
+
+        return view('dashboard', compact('company', 'role', 'customerCount', 'productCount', 'lowStockCount', 'openPayableCents', 'overduePayables', 'openReceivableCents', 'overdueReceivables', 'openCashSession', 'cashBalanceCents', 'hideValues', 'servicesEnabled', 'canAccessServiceCatalog'));
+    }
+
+    public function toggleValues(Request $request, CompanyContext $companyContext): RedirectResponse
+    {
+        $company = $companyContext->company();
+        abort_unless($company, 403);
+        $key = 'dashboard.hide_values.'.$company->id;
+        $request->session()->put($key, ! (bool) $request->session()->get($key, false));
+
+        return back();
+    }
+}

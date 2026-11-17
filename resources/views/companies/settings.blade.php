@@ -1,0 +1,25 @@
+@extends('layouts.app', ['title' => 'Dados da empresa | RMC Flow Comércio Cloud'])
+@section('content')
+<section class="card">
+    <div class="actions" style="justify-content:space-between;flex-wrap:wrap"><div><p class="muted" style="margin-bottom:8px">CONFIGURAÇÕES</p><h1 class="title">Dados da empresa</h1><p class="muted">Essas informações podem ser usadas em documentos e relatórios.</p></div><div class="actions"><a class="btn secondary" href="{{ route('company.users.index') }}">Usuários</a><a class="btn secondary" href="{{ route('company.audit.index') }}">Auditoria</a><a class="btn secondary" href="{{ route('dashboard') }}">Voltar ao painel</a></div></div>
+    @if(session('settings_notice'))<div class="alert alert-success" role="status">{{ session('settings_notice') }}</div>@endif
+    @if(session('module_notice'))<div class="alert alert-success" role="status">{{ session('module_notice') }}</div>@endif
+    <form method="post" action="{{ route('company.settings.update') }}">@csrf @method('PUT')
+        <div class="grid"><div class="field"><label for="legal_name">Razão social *</label><input id="legal_name" name="legal_name" maxlength="190" required value="{{ old('legal_name', $company->legal_name) }}">@error('legal_name')<div class="error">{{ $message }}</div>@enderror</div><div class="field"><label for="trade_name">Nome fantasia *</label><input id="trade_name" name="trade_name" maxlength="190" required value="{{ old('trade_name', $company->trade_name) }}">@error('trade_name')<div class="error">{{ $message }}</div>@enderror</div></div>
+        <div class="grid"><div class="field"><label for="document">CNPJ/CPF</label><input id="document" name="document" maxlength="32" value="{{ old('document', $company->document) }}">@error('document')<div class="error">{{ $message }}</div>@enderror</div><div class="field"><label for="activity">Atividade principal</label><input id="activity" name="activity" maxlength="120" value="{{ old('activity', $activity['value'] ?? '') }}">@error('activity')<div class="error">{{ $message }}</div>@enderror</div></div>
+        <div class="grid"><div class="field"><label for="email">E-mail comercial</label><input id="email" name="email" type="email" maxlength="190" value="{{ old('email', $company->email) }}">@error('email')<div class="error">{{ $message }}</div>@enderror</div><div class="field"><label for="phone">Telefone</label><input id="phone" name="phone" maxlength="32" value="{{ old('phone', $company->phone) }}">@error('phone')<div class="error">{{ $message }}</div>@enderror</div></div>
+        <h2>Endereço</h2><div class="grid"><div class="field"><label for="street">Logradouro</label><input id="street" name="street" maxlength="190" value="{{ old('street', $address['street'] ?? '') }}"></div><div class="field"><label for="number">Número</label><input id="number" name="number" maxlength="30" value="{{ old('number', $address['number'] ?? '') }}"></div></div>
+        <div class="grid"><div class="field"><label for="complement">Complemento</label><input id="complement" name="complement" maxlength="100" value="{{ old('complement', $address['complement'] ?? '') }}"></div><div class="field"><label for="district">Bairro</label><input id="district" name="district" maxlength="100" value="{{ old('district', $address['district'] ?? '') }}"></div></div>
+        <div class="grid"><div class="field"><label for="city">Cidade</label><input id="city" name="city" maxlength="100" value="{{ old('city', $address['city'] ?? '') }}"></div><div class="field"><label for="state">UF</label><input id="state" name="state" maxlength="2" value="{{ old('state', $address['state'] ?? '') }}"></div></div>
+        <div class="field"><label for="postal_code">CEP</label><input id="postal_code" name="postal_code" maxlength="12" value="{{ old('postal_code', $address['postal_code'] ?? '') }}"></div>
+        @foreach(['complement','district','city','state','postal_code','street','number'] as $field)@error($field)<div class="error">{{ $message }}</div>@enderror @endforeach
+        <button class="btn" type="submit">Salvar dados</button>
+    </form>
+    <hr style="border:0;border-top:1px solid #e1e8f0;margin:28px 0"><h2>Módulos da empresa</h2><p class="muted">A configuração é individual para cada empresa. Ative serviços quando a operação também trabalhar com ordens e atendimentos.</p>
+    <form method="post" action="{{ route('company.modules.update') }}">@csrf @method('PUT')
+        <div class="company"><div><strong>Prestação de serviços</strong><p class="muted" style="margin:6px 0 0">Agenda, orçamentos e ordens de serviço serão disponibilizados conforme os módulos forem concluídos.</p></div><label style="display:flex;align-items:center;gap:8px"><input type="hidden" name="services_enabled" value="0"><input type="checkbox" name="services_enabled" value="1" @checked($servicesEnabled)> Ativo</label></div>
+        @error('services_enabled')<div class="error">{{ $message }}</div>@enderror
+        <button class="btn" type="submit" style="margin-top:16px">Salvar módulos</button>
+    </form>
+</section>
+@endsection
