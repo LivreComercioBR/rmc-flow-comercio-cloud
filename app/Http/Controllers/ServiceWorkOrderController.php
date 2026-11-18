@@ -32,8 +32,9 @@ use Illuminate\View\View;
 final class ServiceWorkOrderController extends Controller
 {
     private const STATUSES = [
-        'open' => 'Aberta', 'diagnosis' => 'Em diagnóstico', 'in_progress' => 'Em execução',
-        'completed' => 'Serviço concluído', 'awaiting_payment' => 'Aguardando pagamento',
+        'open' => 'Aberta', 'diagnosis' => 'Em diagnóstico', 'awaiting_quote' => 'Orçamento',
+        'awaiting_approval' => 'Aguardando aprovação', 'approved' => 'Aprovado', 'in_maintenance' => 'Em manutenção',
+        'awaiting_part' => 'Aguardando peça', 'in_progress' => 'Em execução', 'completed' => 'Serviço concluído', 'awaiting_payment' => 'Aguardando pagamento',
         'ready' => 'Pronta para retirada', 'finalized' => 'Finalizada', 'cancelled' => 'Cancelada',
     ];
 
@@ -67,8 +68,10 @@ final class ServiceWorkOrderController extends Controller
         abort_unless($context->id(), 403);
         $order = ServiceWorkOrder::query()->with(['customer', 'quote', 'appointment', 'asset', 'items.product', 'creator'])->findOrFail($workOrder);
         $next = match ($order->status) {
-            'open' => ['diagnosis', 'in_progress'], 'diagnosis' => ['in_progress'], 'in_progress' => ['completed'],
-            'completed' => ['awaiting_payment'], 'awaiting_payment' => [], 'ready' => ['finalized'], 'finalized' => [],
+            'open' => ['diagnosis'], 'diagnosis' => ['awaiting_quote'], 'awaiting_quote' => ['awaiting_approval'],
+            'awaiting_approval' => ['approved'], 'approved' => ['in_maintenance'], 'in_maintenance' => ['awaiting_part', 'completed'],
+            'awaiting_part' => ['in_maintenance', 'completed'], 'in_progress' => ['completed'],
+            'completed' => ['awaiting_payment'], 'awaiting_payment' => ['ready'], 'ready' => ['finalized'], 'finalized' => [],
             default => [],
         };
         $order->load(['receivable.payments.creator', 'refunds.creator', 'refunds.approver', 'cancelledBy', 'cancellationApprover']);
