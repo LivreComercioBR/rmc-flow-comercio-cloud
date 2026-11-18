@@ -108,7 +108,7 @@
             const qtyCell = document.createElement('td'); qtyCell.style.padding = '10px';
             const hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.name = `items[${index}][product_id]`; hidden.value = String(product.id); qtyCell.append(hidden);
             const qty = document.createElement('input'); qty.type = 'number'; qty.name = `items[${index}][quantity]`; qty.min = '1'; qty.max = String(product.stock); qty.step = '1'; qty.value = String(quantity); qty.setAttribute('aria-label', `Quantidade de ${product.name}`); qty.style.cssText = 'width:110px;height:40px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit';
-            qty.addEventListener('input', () => { const val = Math.floor(Number(qty.value)); if (val > 0 && val <= product.stock) cart.set(product.id, val); else cart.delete(product.id); renderCart(); });
+            qty.addEventListener('change', () => { const val = Math.floor(Number(qty.value)); if (val > 0 && val <= product.stock) cart.set(product.id, val); else cart.delete(product.id); renderCart(); });
             qtyCell.append(qty);
             const total = document.createElement('td'); total.style.padding = '10px'; total.textContent = 'R$ ' + money(line);
             const action = document.createElement('td'); action.style.padding = '10px';
