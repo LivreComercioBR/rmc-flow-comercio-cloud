@@ -69,10 +69,16 @@ final class ServiceWorkOrderController extends Controller
         abort_unless($context->id(), 403);
         $order = ServiceWorkOrder::query()->with(['customer', 'quote', 'appointment', 'asset', 'items.product', 'creator'])->findOrFail($workOrder);
         $next = $order->stock_applied_at
-            ? match ($order->status) {
-                'completed' => ['awaiting_payment'], 'awaiting_payment' => ['ready'], 'ready' => ['finalized'], default => [],
-            }
-            : array_values(array_diff(['open', 'diagnosis', 'awaiting_quote', 'quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part', 'in_progress', 'completed', 'awaiting_payment'], [$order->status]));
+            ? array_values(array_unique(array_merge(
+                [$order->status],
+                match ($order->status) {
+                    'completed' => ['awaiting_payment'], 'awaiting_payment' => ['ready'], 'ready' => ['finalized'], default => [],
+                }
+            )))
+            : array_values(array_unique(array_merge(
+                [$order->status],
+                array_diff(['open', 'diagnosis', 'awaiting_quote', 'quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part', 'in_progress', 'completed', 'awaiting_payment'], [$order->status])
+            )));
         $order->load(['receivable.payments.creator', 'refunds.creator', 'refunds.approver', 'cancelledBy', 'cancellationApprover']);
         $cashSessionOpen = CashSession::query()->where('status', 'open')->exists();
         $role = CompanyMembership::query()->where('company_id', $context->id())->where('user_id', auth()->id())->where('status', 'active')->value('role');
@@ -329,6 +335,7 @@ final class ServiceWorkOrderController extends Controller
                     'ready' => ['finalized', 'cancelled'], default => ['cancelled'],
                 }
                 : array_values(array_unique(array_merge(
+                    [$current],
                     array_diff(['open', 'diagnosis', 'awaiting_quote', 'quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part', 'in_progress', 'completed', 'awaiting_payment'], [$current]),
                     ['cancelled']
                 )));
@@ -379,7 +386,7 @@ final class ServiceWorkOrderController extends Controller
                 $order->stock_reversed_at = now($company->timezone);
             }
             $order->status = $target;
-            if ($target === 'completed') $order->completed_at = now($company->timezone);
+            if ($target === 'completed' && ! $order->completed_at) $order->completed_at = now($company->timezone);
             if ($target === 'finalized') $order->finalized_at = now($company->timezone);
             if ($target === 'cancelled') {
                 $order->cancelled_at = now($company->timezone);
