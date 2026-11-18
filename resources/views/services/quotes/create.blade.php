@@ -105,12 +105,15 @@
                 const button = document.createElement('button');
                 button.type = 'button'; button.textContent = option.textContent.trim();
                 button.style.cssText = 'display:block;width:100%;text-align:left;padding:9px 12px;border:0;background:white;cursor:pointer';
-                button.addEventListener('click', () => {
-                    source.options.forEach((candidate) => { candidate.selected = candidate === option; });
+                const chooseOption = (event) => {
+                    event.preventDefault();
+                    source.selectedIndex = [...source.options].indexOf(option);
                     search.value = option.textContent.trim();
                     results.style.display = 'none';
                     recalculate();
-                });
+                };
+                button.addEventListener('mousedown', chooseOption);
+                button.addEventListener('click', chooseOption);
                 results.appendChild(button);
             });
             results.style.display = options.length ? 'block' : 'none';
