@@ -29,6 +29,7 @@ use App\Http\Controllers\ServiceCatalogController;
 use App\Http\Controllers\ServiceAppointmentController;
 use App\Http\Controllers\ServiceQuoteController;
 use App\Http\Controllers\ServiceWorkOrderController;
+use App\Http\Controllers\ServiceWorkOrderEntryController;
 use App\Http\Controllers\ServiceAssetController;
 use App\Http\Controllers\Auth\CompanyRegistrationController;
 use App\Http\Controllers\Auth\ChangeUnverifiedEmailController;
@@ -197,6 +198,8 @@ Route::middleware('auth')->group(function (): void {
             });
             Route::prefix('ordens-de-servico')->name('work-orders.')->group(function (): void {
                 Route::get('/', [ServiceWorkOrderController::class, 'index'])->name('index');
+                Route::get('/nova', [ServiceWorkOrderEntryController::class, 'create'])->name('create');
+                Route::post('/', [ServiceWorkOrderEntryController::class, 'store'])->middleware('throttle:20,1')->name('store');
                 Route::get('/{workOrder}', [ServiceWorkOrderController::class, 'show'])->whereNumber('workOrder')->name('show');
                 Route::post('/a-partir-do-orcamento/{quote}', [ServiceWorkOrderController::class, 'createFromQuote'])->whereNumber('quote')->middleware('throttle:10,1')->name('from-quote');
                 Route::post('/{workOrder}/devolucoes', [ServiceWorkOrderController::class, 'refund'])->whereNumber('workOrder')->middleware('throttle:10,1')->name('refund');
