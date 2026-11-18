@@ -168,6 +168,8 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/relatorios', ReportController::class)->name('reports.index');
         Route::middleware('services.module')->prefix('servicos')->name('services.')->group(function (): void {
             Route::get('/veiculos-equipamentos', [ServiceAssetController::class, 'index'])->name('assets.index');
+            Route::get('/veiculos-equipamentos/novo', [ServiceAssetController::class, 'create'])->name('assets.create');
+            Route::post('/veiculos-equipamentos', [ServiceAssetController::class, 'storeStandalone'])->name('assets.storeStandalone');
             Route::get('/veiculos-equipamentos/{asset}', [ServiceAssetController::class, 'show'])->whereNumber('asset')->name('assets.show');
             Route::put('/clientes/{customer}/equipamentos/{asset}', [ServiceAssetController::class, 'update'])->whereNumber('customer')->whereNumber('asset')->name('assets.update');
             Route::post('/clientes/{customer}/equipamentos', [ServiceAssetController::class, 'store'])->whereNumber('customer')->name('assets.store');
