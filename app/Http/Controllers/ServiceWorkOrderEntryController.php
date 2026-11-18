@@ -36,6 +36,7 @@ final class ServiceWorkOrderEntryController extends Controller
         $companyId = (int) $company->id;
         $data = $request->validate([
             'customer_id' => ['required', 'integer', Rule::exists('customers', 'id')->where('company_id', $companyId)],
+            'initial_status' => ['required', Rule::in(['open', 'diagnosis', 'in_progress'])],
             'service_asset_id' => ['nullable', 'integer', Rule::exists('service_assets', 'id')->where('company_id', $companyId)->where('status', 'active')],
             'asset_type' => ['nullable', Rule::in(['vehicle', 'motorcycle', 'equipment', 'other'])],
             'asset_description' => ['nullable', 'string', 'max:180'],
@@ -129,7 +130,7 @@ final class ServiceWorkOrderEntryController extends Controller
                 'asset_model' => $asset?->model ?? ($data['asset_model'] ?? null),
                 'asset_year' => $asset?->year ?? ($data['asset_year'] ?? null),
                 'asset_color' => $asset?->color ?? ($data['asset_color'] ?? null),
-                'status' => 'open', 'complaint' => trim($data['complaint']),
+                'status' => $data['initial_status'], 'complaint' => trim($data['complaint']),
                 'diagnosis' => trim((string) ($data['diagnosis'] ?? '')) ?: null,
                 'notes' => trim((string) ($data['notes'] ?? '')) ?: null,
                 'warranty_days' => (int) ($data['warranty_days'] ?? 0),
