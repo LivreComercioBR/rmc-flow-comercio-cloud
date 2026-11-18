@@ -68,13 +68,11 @@ final class ServiceWorkOrderController extends Controller
     {
         abort_unless($context->id(), 403);
         $order = ServiceWorkOrder::query()->with(['customer', 'quote', 'appointment', 'asset', 'items.product', 'creator'])->findOrFail($workOrder);
-        $next = match ($order->status) {
-            'open' => ['diagnosis'], 'diagnosis' => ['awaiting_quote'], 'awaiting_quote' => ['awaiting_approval'],
-            'awaiting_approval' => ['approved'], 'approved' => ['in_maintenance'], 'in_maintenance' => ['awaiting_part', 'completed'],
-            'awaiting_part' => ['in_maintenance', 'completed'], 'in_progress' => ['completed'],
-            'completed' => ['awaiting_payment'], 'awaiting_payment' => ['ready'], 'ready' => ['finalized'], 'finalized' => [],
-            default => [],
-        };
+        $next = $order->stock_applied_at
+            ? match ($order->status) {
+                'completed' => ['awaiting_payment'], 'awaiting_payment' => ['ready'], 'ready' => ['finalized'], default => [],
+            }
+            : array_values(array_diff(['open', 'diagnosis', 'awaiting_quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part', 'completed', 'awaiting_payment'], [$order->status]));
         $order->load(['receivable.payments.creator', 'refunds.creator', 'refunds.approver', 'cancelledBy', 'cancellationApprover']);
         $cashSessionOpen = CashSession::query()->where('status', 'open')->exists();
         $role = CompanyMembership::query()->where('company_id', $context->id())->where('user_id', auth()->id())->where('status', 'active')->value('role');
@@ -325,14 +323,15 @@ final class ServiceWorkOrderController extends Controller
             $order = ServiceWorkOrder::query()->with('items')->whereKey($workOrder)->lockForUpdate()->firstOrFail();
             $current = $order->status;
             $target = $data['status'];
-            $allowed = match ($current) {
-                'open' => ['diagnosis', 'cancelled'], 'diagnosis' => ['awaiting_quote', 'cancelled'],
-                'awaiting_quote' => ['awaiting_approval', 'cancelled'], 'awaiting_approval' => ['approved', 'awaiting_quote', 'cancelled'],
-                'approved' => ['in_maintenance', 'awaiting_quote', 'cancelled'], 'in_maintenance' => ['awaiting_part', 'completed', 'cancelled'],
-                'awaiting_part' => ['in_maintenance', 'completed', 'cancelled'], 'in_progress' => ['completed', 'cancelled'],
-                'completed' => ['awaiting_payment', 'cancelled'], 'awaiting_payment' => ['ready', 'cancelled'],
-                'ready' => ['finalized', 'cancelled'], 'finalized' => ['cancelled'], default => [],
-            };
+            $allowed = $order->stock_applied_at
+                ? match ($current) {
+                    'completed' => ['awaiting_payment', 'cancelled'], 'awaiting_payment' => ['ready', 'cancelled'],
+                    'ready' => ['finalized', 'cancelled'], default => ['cancelled'],
+                }
+                : array_values(array_unique(array_merge(
+                    array_diff(['open', 'diagnosis', 'awaiting_quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part', 'completed', 'awaiting_payment'], [$current]),
+                    ['cancelled']
+                )));
             if (! in_array($target, $allowed, true)) throw ValidationException::withMessages(['status' => 'Esta ordem não permite a mudança de situação solicitada.']);
 
             if ($target === 'ready') {
