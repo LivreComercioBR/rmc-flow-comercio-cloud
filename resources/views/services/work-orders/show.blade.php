@@ -72,13 +72,29 @@
             <div style="margin:18px 0"><strong>Diagnóstico</strong><p style="white-space:pre-line">{{ $order->diagnosis }}</p></div>
         <?php } ?>
 
+        <?php if (! in_array($order->status, ['completed', 'awaiting_payment', 'ready', 'finalized', 'cancelled'], true) && ! $order->stock_applied_at) { ?>
+            <div class="no-print" style="margin:18px 0;padding:16px;border:1px solid #cbd5e1;border-radius:8px">
+                <h2>Peças e mão de obra do orçamento</h2>
+                <p class="muted">Adicione os itens necessários após o diagnóstico. O estoque só será baixado quando o serviço for concluído.</p>
+                <form method="post" action="{{ route('services.work-orders.items.add', $order->id) }}" class="grid" style="max-width:950px">
+                    <?= csrf_field() ?>
+                    <div class="field"><label for="item_type">Tipo de item</label><select id="item_type" name="type" required><option value="product">Peça / produto</option><option value="service">Serviço / mão de obra</option></select></div>
+                    <div class="field"><label for="item_product">Produto</label><select id="item_product" name="product_id"><option value="">Selecione</option><?php foreach ($products as $product) { ?><option value="{{ $product->id }}">{{ $product->name }} · R$ {{ number_format($product->sale_price_cents / 100, 2, ',', '.') }}</option><?php } ?></select></div>
+                    <div class="field"><label for="item_name">Serviço / mão de obra</label><input id="item_name" name="name" maxlength="180" placeholder="Ex.: troca de tela, mão de obra"></div>
+                    <div class="field"><label for="item_quantity">Quantidade</label><input id="item_quantity" name="quantity" type="number" min="0.001" step="0.001" value="1" required></div>
+                    <div class="field"><label for="item_price">Valor unitário (R$) — serviço</label><input id="item_price" name="unit_price" type="number" min="0" step="0.01"></div>
+                    <div class="field" style="grid-column:1/-1"><label for="item_description">Detalhes (opcional)</label><input id="item_description" name="description" maxlength="1000"></div>
+                    <div class="actions"><button class="btn" type="submit">Adicionar ao orçamento</button></div>
+                </form>
+            </div>
+        <?php } ?>
         <div style="overflow-x:auto">
             <table style="width:100%;border-collapse:collapse;text-align:left">
                 <thead><tr><th style="padding:10px;border-bottom:1px solid #9aa9bb">Item</th><th style="padding:10px;border-bottom:1px solid #9aa9bb">Qtd.</th><th style="padding:10px;border-bottom:1px solid #9aa9bb">Preço unitário</th><th style="padding:10px;border-bottom:1px solid #9aa9bb">Total</th></tr></thead>
                 <tbody>
                     <?php foreach ($order->items as $item) { ?>
                         <tr>
-                            <td style="padding:10px;border-bottom:1px solid #dbe3ed"><strong>{{ $item->name }}</strong><?php if ($item->description) { ?><br>{{ $item->description }}<?php } ?></td>
+                            <td style="padding:10px;border-bottom:1px solid #dbe3ed"><strong>{{ $item->name }}</strong><?php if ($item->description) { ?><br>{{ $item->description }}<?php } ?><?php if (! in_array($order->status, ['completed', 'awaiting_payment', 'ready', 'finalized', 'cancelled'], true) && ! $order->stock_applied_at) { ?><form class="no-print" method="post" action="{{ route('services.work-orders.items.remove', [$order->id, $item->id]) }}" style="margin-top:6px"><?= csrf_field() ?><?= method_field('DELETE') ?><button class="btn secondary" type="submit">Remover</button></form><?php } ?></td>
                             <td style="padding:10px;border-bottom:1px solid #dbe3ed">{{ number_format((float) $item->quantity, 3, ',', '.') }}</td>
                             <td style="padding:10px;border-bottom:1px solid #dbe3ed">R$ {{ number_format($item->unit_price_cents / 100, 2, ',', '.') }}</td>
                             <td style="padding:10px;border-bottom:1px solid #dbe3ed">R$ {{ number_format($item->total_cents / 100, 2, ',', '.') }}</td>
