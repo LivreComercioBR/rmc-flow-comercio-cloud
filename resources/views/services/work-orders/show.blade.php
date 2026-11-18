@@ -119,7 +119,7 @@
                             });
                             results.appendChild(button);
                         });
-                        results.style.display = options.length ? 'block' : 'none';
+                        results.style.display = q && options.length ? 'block' : 'none';
                     };
                     type.addEventListener('change', () => {
                         productId.value = ''; serviceId.value = ''; search.value = ''; name.value = ''; price.value = '';
@@ -256,7 +256,7 @@
                         <div class="field" id="cancel-staff-password-wrap" hidden><label for="cancel_approval_password">Senha do administrador</label><input id="cancel_approval_password" name="approval_password" type="password" autocomplete="new-password" data-cancel-required></div>
                     <?php } ?>
                 <?php } ?>
-                <div class="actions"><button class="btn" type="submit" onclick="return confirm(document.getElementById('status').value === 'cancelled' ? 'Confirmar cancelamento da OS? O estoque será estornado e os valores já recebidos continuarão registrados.' : 'Confirmar a atualização da ordem de serviço?')">Salvar andamento</button></div>
+                <div class="actions"><button class="btn" type="submit" onclick="return document.getElementById('status').value !== 'cancelled' || confirm('Confirmar cancelamento da OS? O estoque será estornado e os valores já recebidos continuarão registrados?')">Salvar andamento</button></div>
             </form>
         </div>
     <?php } ?>
