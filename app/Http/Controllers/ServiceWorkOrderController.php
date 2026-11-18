@@ -253,6 +253,59 @@ final class ServiceWorkOrderController extends Controller
         return redirect()->route('services.work-orders.show', $workOrder)->with('work_order_notice', 'Devolução registrada sem apagar o recebimento original.');
     }
 
+    public function addItem(Request $request, int $workOrder, CompanyContext $context, AuditTrailService $audit): RedirectResponse
+    {
+        $company = $context->company();
+        abort_unless($company, 403);
+        $data = $request->validate([
+            'type' => ['required', Rule::in(['product', 'service'])], 'product_id' => ['nullable', 'integer'],
+            'name' => ['nullable', 'string', 'max:180'], 'description' => ['nullable', 'string', 'max:1000'],
+            'quantity' => ['required', 'numeric', 'gt:0', 'max:999999999.999', 'regex:/^\\d+(?:[.,]\\d{1,3})?$/'],
+            'unit_price' => ['nullable', 'numeric', 'min:0', 'max:42949672.95', 'regex:/^\\d+(?:[.,]\\d{1,2})?$/'],
+        ]);
+        if ($data['type'] === 'product' && empty($data['product_id'])) throw ValidationException::withMessages(['product_id' => 'Selecione a peça/produto.']);
+        if ($data['type'] === 'service' && trim((string) ($data['name'] ?? '')) === '') throw ValidationException::withMessages(['name' => 'Informe o serviço ou mão de obra.']);
+        DB::transaction(function () use ($company, $workOrder, $data, $request, $audit): void {
+            $order = ServiceWorkOrder::query()->whereKey($workOrder)->lockForUpdate()->firstOrFail();
+            if (! in_array($order->status, ['open', 'diagnosis', 'awaiting_quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part'], true) || $order->stock_applied_at) {
+                throw ValidationException::withMessages(['items' => 'Os itens só podem ser alterados antes da conclusão do serviço.']);
+            }
+            $product = null;
+            if ($data['type'] === 'product') {
+                $product = Product::query()->where('company_id', $company->id)->where('status', 'active')->whereKey($data['product_id'])->lockForUpdate()->first();
+                if (! $product) throw ValidationException::withMessages(['product_id' => 'Produto não encontrado ou inativo.']);
+            }
+            $quantity = (float) str_replace(',', '.', (string) $data['quantity']);
+            $unitCents = $product ? (int) $product->sale_price_cents : (int) round((float) str_replace(',', '.', (string) ($data['unit_price'] ?? 0)) * 100);
+            if (! $product && ! array_key_exists('unit_price', $data)) throw ValidationException::withMessages(['unit_price' => 'Informe o valor da mão de obra/serviço.']);
+            $quantityMilli = (int) round($quantity * 1000);
+            $item = ServiceWorkOrderItem::create([
+                'company_id' => $company->id, 'service_work_order_id' => $order->id, 'item_type' => $data['type'],
+                'product_id' => $product?->id, 'name' => $product?->name ?? trim((string) $data['name']),
+                'description' => trim((string) ($data['description'] ?? '')) ?: null, 'quantity' => $quantity,
+                'unit_price_cents' => $unitCents, 'total_cents' => (int) round($quantityMilli * $unitCents / 1000),
+            ]);
+            $audit->record((int) $company->id, 'service.work_order_item_added', 'Item adicionado à OS #'.$order->work_order_number.'.', (int) $request->user()->id, 'service_work_order_item', (int) $item->id, ['work_order_id' => (int) $order->id, 'type' => $item->item_type]);
+        });
+        return back()->with('work_order_notice', 'Peça/serviço adicionado ao orçamento da OS.');
+    }
+
+    public function removeItem(Request $request, int $workOrder, int $item, CompanyContext $context, AuditTrailService $audit): RedirectResponse
+    {
+        $company = $context->company();
+        abort_unless($company, 403);
+        DB::transaction(function () use ($company, $workOrder, $item, $request, $audit): void {
+            $order = ServiceWorkOrder::query()->whereKey($workOrder)->lockForUpdate()->firstOrFail();
+            if (! in_array($order->status, ['open', 'diagnosis', 'awaiting_quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part'], true) || $order->stock_applied_at) {
+                throw ValidationException::withMessages(['items' => 'Os itens só podem ser alterados antes da conclusão do serviço.']);
+            }
+            $line = ServiceWorkOrderItem::query()->where('service_work_order_id', $order->id)->whereKey($item)->firstOrFail();
+            $line->delete();
+            $audit->record((int) $company->id, 'service.work_order_item_removed', 'Item removido da OS #'.$order->work_order_number.'.', (int) $request->user()->id, 'service_work_order', (int) $order->id, ['item_id' => (int) $item]);
+        });
+        return back()->with('work_order_notice', 'Item removido do orçamento da OS.');
+    }
+
     public function updateStatus(Request $request, int $workOrder, CompanyContext $context, StockMovementService $stock, AuditTrailService $audit): RedirectResponse
     {
         $company = $context->company();
