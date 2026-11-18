@@ -16,17 +16,18 @@
     <form method="post" action="{{ route('services.work-orders.store') }}" id="work-order-create-form">
         @csrf
         <div class="grid">
-            <div class="field">
-                <label for="customer_search">Buscar cliente</label>
-                <input id="customer_search" type="search" placeholder="Digite nome, documento ou telefone" autocomplete="off">
-                <label for="customer_id" style="margin-top:8px">Cliente *</label>
-                <select id="customer_id" name="customer_id" required>
-                    <option value="">Selecione o cliente</option>
+            <div class="field" style="position:relative">
+                <label for="customer_search">Buscar cliente *</label>
+                <input id="customer_search" type="search" placeholder="Digite o nome, documento ou telefone" autocomplete="off" aria-controls="customer-results" aria-autocomplete="list">
+                <input id="customer_id" type="hidden" name="customer_id" value="{{ old('customer_id') }}" required>
+                <div id="selected-customer" class="muted" style="min-height:22px;margin-top:6px">Nenhum cliente selecionado.</div>
+                <div id="customer-results" role="listbox" style="display:none;position:absolute;z-index:20;top:100%;left:0;right:0;max-height:260px;overflow:auto;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 8px 24px #0b1f3a22"></div>
+                <div class="actions" style="margin-top:8px"><a class="btn secondary" href="{{ route('customers.create') }}">Cadastrar novo cliente</a></div>
+                <div id="customer-data" hidden>
                     @foreach ($customers as $customer)
-                        <option value="{{ $customer->id }}" data-search="{{ mb_strtolower($customer->name.' '.$customer->document.' '.$customer->phone) }}" @selected((string) old('customer_id') === (string) $customer->id)>{{ $customer->name }}</option>
+                        <button type="button" data-id="{{ $customer->id }}" data-name="{{ $customer->name }}" data-search="{{ mb_strtolower($customer->name.' '.$customer->document.' '.$customer->phone) }}"></button>
                     @endforeach
-                </select>
-                <div class="actions" style="margin-top:8px"><a class="btn secondary" href="{{ route('customers.index') }}" target="_blank" rel="noopener">Pesquisar clientes</a><a class="btn secondary" href="{{ route('customers.create') }}" target="_blank" rel="noopener">Novo cliente</a></div>
+                </div>
             </div>
             <div class="field">
                 <label for="service_asset_id">Veículo / equipamento cadastrado</label>
@@ -102,14 +103,47 @@
 (() => {
     const customer = document.getElementById('customer_id');
     const customerSearch = document.getElementById('customer_search');
-    customerSearch?.addEventListener('input', () => {
+    const customerResults = document.getElementById('customer-results');
+    const selectedCustomer = document.getElementById('selected-customer');
+    const customerData = [...document.querySelectorAll('#customer-data [data-id]')];
+    const chooseCustomer = (entry) => {
+        customer.value = entry.dataset.id;
+        customerSearch.value = entry.dataset.name;
+        selectedCustomer.textContent = 'Cliente selecionado: ' + entry.dataset.name;
+        customerResults.replaceChildren();
+        customerResults.style.display = 'none';
+        syncAssets();
+    };
+    const renderCustomers = () => {
         const term = customerSearch.value.trim().toLocaleLowerCase();
-        [...customer.options].forEach(option => {
-            if (!option.value) { option.hidden = false; return; }
-            option.hidden = term !== '' && !option.dataset.search.includes(term);
-        });
-        if (customer.selectedOptions[0]?.hidden) customer.value = '';
-    });
+        customer.value = '';
+        selectedCustomer.textContent = 'Selecione um resultado para vincular o cliente à OS.';
+        customerResults.replaceChildren();
+        if (!term) { customerResults.style.display = 'none'; syncAssets(); return; }
+        const matches = customerData.filter(entry => entry.dataset.search.includes(term)).slice(0, 10);
+        if (!matches.length) {
+            const empty = document.createElement('div');
+            empty.textContent = 'Nenhum cliente encontrado.';
+            empty.style.cssText = 'padding:10px 12px;color:#66758b';
+            customerResults.append(empty);
+        } else {
+            matches.forEach(entry => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.role = 'option';
+                button.textContent = entry.dataset.name;
+                button.style.cssText = 'display:block;width:100%;padding:10px 12px;text-align:left;border:0;border-bottom:1px solid #e2e8f0;background:white;font:inherit;cursor:pointer';
+                button.addEventListener('click', () => chooseCustomer(entry));
+                customerResults.append(button);
+            });
+        }
+        customerResults.style.display = 'block';
+        syncAssets();
+    };
+    customerSearch?.addEventListener('input', renderCustomers);
+    customerSearch?.addEventListener('focus', () => { if (customerSearch.value && !customer.value) renderCustomers(); });
+    const initialCustomer = customerData.find(entry => entry.dataset.id === customer.value);
+    if (initialCustomer) chooseCustomer(initialCustomer);
     const asset = document.getElementById('service_asset_id');
     document.getElementById('add-asset-fields')?.addEventListener('click', () => {
         asset.value = '';
