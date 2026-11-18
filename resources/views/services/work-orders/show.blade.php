@@ -131,7 +131,7 @@
                     search.addEventListener('input', renderResults);
                     search.addEventListener('focus', renderResults);
                     document.addEventListener('click', (event) => { if (!results.contains(event.target) && event.target !== search) results.style.display = 'none'; });
-                    name.addEventListener('input', () => { serviceId.value = ''; });
+                    name.addEventListener('input', () => { serviceId.value = ''; if (type.value === 'service') { search.value = name.value; renderResults(); } });
                     price.addEventListener('input', refreshTotal); quantity.addEventListener('input', refreshTotal);
                     type.dispatchEvent(new Event('change'));
                 })();
