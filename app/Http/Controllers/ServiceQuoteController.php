@@ -67,6 +67,7 @@ final class ServiceQuoteController extends Controller
             'appointments' => ServiceAppointment::query()->with('customer')->whereIn('status', ['scheduled', 'confirmed'])->orderBy('scheduled_at')->limit(100)->get(),
             'appointment' => $appointment,
             'customerId' => $customerId ?? $appointment?->customer_id,
+            'companyId' => (int) $companyId,
             'expiresAt' => now($context->company()?->timezone ?? config('app.timezone'))->addDays(10)->toDateString(),
             'requestKey' => (string) Str::uuid(),
             'seedItems' => $seedItems,
