@@ -10,6 +10,7 @@ use App\Models\CashMovement;
 use App\Models\CompanyMembership;
 use App\Models\Product;
 use App\Models\ServiceAppointment;
+use App\Models\ServiceCatalogItem;
 use App\Models\ServiceAsset;
 use App\Models\ServiceQuote;
 use App\Models\ServiceWorkOrder;
@@ -89,7 +90,7 @@ final class ServiceWorkOrderController extends Controller
         $defaultRefundMethod = $refundOptions->keys()->first();
         if (! $cashSessionOpen && $defaultRefundMethod === 'cash') $defaultRefundMethod = $refundOptions->keys()->skip(1)->first();
 
-        return view('services.work-orders.show', ['order' => $order, 'products' => Product::query()->where('company_id', $context->id())->where('status', 'active')->orderBy('name')->get(), 'statuses' => self::STATUSES, 'nextStatuses' => $next, 'cashSessionOpen' => $cashSessionOpen, 'role' => $role, 'canRequestCancellation' => in_array($role, ['Administrador', 'Atendente'], true), 'refundOptions' => $refundOptions, 'defaultRefundMethod' => $defaultRefundMethod, 'refundRequestKey' => (string) Str::uuid()]);
+        return view('services.work-orders.show', ['order' => $order, 'products' => Product::query()->where('company_id', $context->id())->where('status', 'active')->orderBy('name')->get(), 'serviceCatalog' => ServiceCatalogItem::query()->where('company_id', $context->id())->where('status', 'active')->orderBy('name')->get(), 'statuses' => self::STATUSES, 'nextStatuses' => $next, 'cashSessionOpen' => $cashSessionOpen, 'role' => $role, 'canRequestCancellation' => in_array($role, ['Administrador', 'Atendente'], true), 'refundOptions' => $refundOptions, 'defaultRefundMethod' => $defaultRefundMethod, 'refundRequestKey' => (string) Str::uuid()]);
     }
 
     public function createFromQuote(Request $request, int $quote, CompanyContext $context, AuditTrailService $audit): RedirectResponse
@@ -258,7 +259,7 @@ final class ServiceWorkOrderController extends Controller
         $company = $context->company();
         abort_unless($company, 403);
         $data = $request->validate([
-            'type' => ['required', Rule::in(['product', 'service'])], 'product_id' => ['nullable', 'integer'],
+            'type' => ['required', Rule::in(['product', 'service'])], 'product_id' => ['nullable', 'integer'], 'service_catalog_id' => ['nullable', 'integer'],
             'name' => ['nullable', 'string', 'max:180'], 'description' => ['nullable', 'string', 'max:1000'],
             'quantity' => ['required', 'numeric', 'gt:0', 'max:999999999.999', 'regex:/^\\d+(?:[.,]\\d{1,3})?$/'],
             'unit_price' => ['nullable', 'numeric', 'min:0', 'max:42949672.95', 'regex:/^\\d+(?:[.,]\\d{1,2})?$/'],
@@ -271,17 +272,24 @@ final class ServiceWorkOrderController extends Controller
                 throw ValidationException::withMessages(['items' => 'Os itens só podem ser alterados antes da conclusão do serviço.']);
             }
             $product = null;
+            $catalogService = null;
             if ($data['type'] === 'product') {
                 $product = Product::query()->where('company_id', $company->id)->where('status', 'active')->whereKey($data['product_id'])->lockForUpdate()->first();
                 if (! $product) throw ValidationException::withMessages(['product_id' => 'Produto não encontrado ou inativo.']);
+            } else {
+                if (! empty($data['service_catalog_id'])) {
+                    $catalogService = ServiceCatalogItem::query()->where('company_id', $company->id)->where('status', 'active')->whereKey($data['service_catalog_id'])->lockForUpdate()->first();
+                    if (! $catalogService) throw ValidationException::withMessages(['service_catalog_id' => 'Serviço não encontrado ou inativo.']);
+                }
+                if (! $catalogService && trim((string) ($data['name'] ?? '')) === '') throw ValidationException::withMessages(['name' => 'Informe o serviço ou mão de obra.']);
             }
             $quantity = (float) str_replace(',', '.', (string) $data['quantity']);
-            $unitCents = $product ? (int) $product->sale_price_cents : (int) round((float) str_replace(',', '.', (string) ($data['unit_price'] ?? 0)) * 100);
-            if (! $product && ! array_key_exists('unit_price', $data)) throw ValidationException::withMessages(['unit_price' => 'Informe o valor da mão de obra/serviço.']);
+            $unitCents = $product ? (int) $product->sale_price_cents : (array_key_exists('unit_price', $data) && $data['unit_price'] !== null ? (int) round((float) str_replace(',', '.', (string) $data['unit_price']) * 100) : (int) ($catalogService?->price_cents ?? 0));
+            if (! $product && $unitCents <= 0 && ! array_key_exists('unit_price', $data)) throw ValidationException::withMessages(['unit_price' => 'Informe o valor da mão de obra/serviço.']);
             $quantityMilli = (int) round($quantity * 1000);
             $item = ServiceWorkOrderItem::create([
                 'company_id' => $company->id, 'service_work_order_id' => $order->id, 'item_type' => $data['type'],
-                'product_id' => $product?->id, 'name' => $product?->name ?? trim((string) $data['name']),
+                'product_id' => $product?->id, 'name' => $product?->name ?? $catalogService?->name ?? trim((string) $data['name']),
                 'description' => trim((string) ($data['description'] ?? '')) ?: null, 'quantity' => $quantity,
                 'unit_price_cents' => $unitCents, 'total_cents' => (int) round($quantityMilli * $unitCents / 1000),
             ]);
