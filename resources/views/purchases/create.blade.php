@@ -59,8 +59,18 @@
   });
   const installmentCount = document.getElementById('installment_count');
   const dueDates = document.getElementById('purchase-due-dates');
+  const totalDisplay = document.getElementById('purchase-total');
+  const installmentDisplay = document.getElementById('installment-total');
+  const balanceDisplay = document.getElementById('installment-balance');
+  const submitButton = document.querySelector('#purchase-form button[type="submit"]');
   const oldDueDates = @json(old('due_dates', []));
+  const oldAmounts = @json(old('installment_amounts', []));
   let firstDueDate = oldDueDates[0] || @json(old('first_due_date', now()->toDateString()));
+  let customAmounts = oldAmounts.length > 0;
+  let amountInputs = [];
+  let dateInputs = [];
+  let totalCents = 0;
+  const money = cents => 'R$ ' + (cents / 100).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const datePlusMonths = (value, months) => {
     const [year, month, day] = value.split('-').map(Number);
     const target = new Date(year, month - 1 + months, 1);
@@ -68,36 +78,103 @@
     target.setDate(Math.min(day, lastDay));
     return [target.getFullYear(), String(target.getMonth() + 1).padStart(2, '0'), String(target.getDate()).padStart(2, '0')].join('-');
   };
+  const getPurchaseTotalCents = () => [...list.querySelectorAll('.purchase-item')].reduce((sum, row) => {
+    const quantity = Number(row.querySelector('input[name$="[quantity]"]')?.value || 0);
+    const unitCents = Math.round(Number(row.querySelector('input[name$="[unit_cost]"]')?.value || 0) * 100);
+    const quantityMilli = Math.round(quantity * 1000);
+    return sum + Math.round(quantityMilli * unitCents / 1000);
+  }, 0);
+  const setDefaultAmounts = () => {
+    const count = amountInputs.length;
+    if (!count || customAmounts) return;
+    const base = Math.floor(totalCents / count);
+    const remainder = totalCents % count;
+    amountInputs.forEach((input, index) => {
+      input.value = ((base + (index < remainder ? 1 : 0)) / 100).toFixed(2);
+    });
+  };
+  const updateTotals = () => {
+    totalCents = getPurchaseTotalCents();
+    totalDisplay.textContent = money(totalCents);
+    const sum = amountInputs.reduce((value, input) => value + Math.round(Number(input.value || 0) * 100), 0);
+    installmentDisplay.textContent = money(sum);
+    const difference = totalCents - sum;
+    if (totalCents <= 0) {
+      balanceDisplay.textContent = 'Informe os produtos e os custos para calcular as parcelas.';
+      balanceDisplay.className = 'muted';
+    } else if (difference === 0) {
+      balanceDisplay.textContent = 'Valores conferidos: as parcelas fecham com o total da compra.';
+      balanceDisplay.className = 'muted';
+    } else {
+      balanceDisplay.textContent = difference > 0 ? 'Faltam ' + money(difference) + ' para fechar o total.' : 'As parcelas excedem o total em ' + money(-difference) + '.';
+      balanceDisplay.className = 'error';
+    }
+    const hasSupplier = Boolean(document.getElementById('supplier_id').value);
+    const hasAvailableProduct = template.content.querySelector('select')?.options.length > 1;
+    submitButton.disabled = !hasSupplier || !hasAvailableProduct || totalCents <= 0 || difference !== 0;
+  };
   const renderDueDates = () => {
-    const inputs = [];
+    const count = Math.min(36, Math.max(1, Number(installmentCount.value) || 1));
+    const previousDates = dateInputs.map(input => input.value);
+    const previousAmounts = amountInputs.map(input => input.value);
     dueDates.replaceChildren();
-    for (let i = 0; i < Number(installmentCount.value); i++) {
-      const field = document.createElement('div');
-      field.className = 'field';
-      const label = document.createElement('label');
-      label.htmlFor = `purchase_due_date_${i}`;
-      label.textContent = `Parcela ${i + 1} — vencimento *`;
-      const input = document.createElement('input');
-      input.type = 'date';
-      input.id = label.htmlFor;
-      input.name = `due_dates[${i}]`;
-      input.required = true;
-      input.value = oldDueDates[i] || datePlusMonths(firstDueDate, i);
-      input.addEventListener('change', () => {
+    amountInputs = [];
+    dateInputs = [];
+    for (let i = 0; i < count; i++) {
+      const card = document.createElement('div');
+      card.className = 'company';
+      card.style.cssText = 'display:grid;grid-template-columns:1fr;gap:8px;margin:0;padding:12px';
+      const title = document.createElement('strong');
+      title.textContent = 'Parcela ' + (i + 1);
+      const amountLabel = document.createElement('label');
+      amountLabel.htmlFor = 'purchase_installment_amount_' + i;
+      amountLabel.textContent = 'Valor (R$) *';
+      const amount = document.createElement('input');
+      amount.type = 'number';
+      amount.id = amountLabel.htmlFor;
+      amount.name = 'installment_amounts[' + i + ']';
+      amount.min = '0.01';
+      amount.max = '42949672.95';
+      amount.step = '0.01';
+      amount.required = true;
+      amount.value = previousAmounts[i] ?? oldAmounts[i] ?? '0.00';
+      amount.addEventListener('input', () => { customAmounts = true; updateTotals(); });
+      const dateLabel = document.createElement('label');
+      dateLabel.htmlFor = 'purchase_due_date_' + i;
+      dateLabel.textContent = 'Vencimento *';
+      const date = document.createElement('input');
+      date.type = 'date';
+      date.id = dateLabel.htmlFor;
+      date.name = 'due_dates[' + i + ']';
+      date.required = true;
+      date.value = previousDates[i] || oldDueDates[i] || datePlusMonths(firstDueDate, i);
+      date.addEventListener('change', () => {
         if (i === 0) {
-          firstDueDate = input.value;
-          inputs.forEach((other, index) => {
+          firstDueDate = date.value;
+          dateInputs.forEach((other, index) => {
             if (index > 0 && !other.dataset.edited) other.value = datePlusMonths(firstDueDate, index);
           });
         }
-        input.dataset.edited = 'true';
+        date.dataset.edited = 'true';
       });
-      inputs.push(input);
-      field.append(label, input);
-      dueDates.append(field);
+      amountInputs.push(amount);
+      dateInputs.push(date);
+      card.append(title, amountLabel, amount, dateLabel, date);
+      dueDates.append(card);
     }
+    setDefaultAmounts();
+    updateTotals();
   };
-  installmentCount.addEventListener('input', renderDueDates);
+  installmentCount.addEventListener('input', () => {
+    customAmounts = oldAmounts.length > 0;
+    renderDueDates();
+  });
+  list.addEventListener('input', () => {
+    if (!customAmounts) setDefaultAmounts();
+    updateTotals();
+  });
+  list.addEventListener('change', updateTotals);
+  document.getElementById('supplier_id').addEventListener('change', updateTotals);
   renderDueDates();
   window.addEventListener('message', (event) => {
     if (event.origin !== window.location.origin || event.data?.type !== 'rmc-product-created-for-purchase') return;
@@ -117,7 +194,7 @@
     }
     target.value = String(product.id);
     target.dispatchEvent(new Event('change', { bubbles: true }));
-    if (document.getElementById('supplier_id').value) document.querySelector('#purchase-form button[type="submit"]').disabled = false;
+    updateTotals();
     target.focus();
   });
 
