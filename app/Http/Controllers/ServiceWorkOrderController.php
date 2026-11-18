@@ -72,7 +72,7 @@ final class ServiceWorkOrderController extends Controller
             ? match ($order->status) {
                 'completed' => ['awaiting_payment'], 'awaiting_payment' => ['ready'], 'ready' => ['finalized'], default => [],
             }
-            : array_values(array_diff(['open', 'diagnosis', 'awaiting_quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part', 'completed', 'awaiting_payment'], [$order->status]));
+            : array_values(array_diff(['open', 'diagnosis', 'awaiting_quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part', 'in_progress', 'completed', 'awaiting_payment'], [$order->status]));
         $order->load(['receivable.payments.creator', 'refunds.creator', 'refunds.approver', 'cancelledBy', 'cancellationApprover']);
         $cashSessionOpen = CashSession::query()->where('status', 'open')->exists();
         $role = CompanyMembership::query()->where('company_id', $context->id())->where('user_id', auth()->id())->where('status', 'active')->value('role');
@@ -266,7 +266,7 @@ final class ServiceWorkOrderController extends Controller
         if ($data['type'] === 'service' && trim((string) ($data['name'] ?? '')) === '') throw ValidationException::withMessages(['name' => 'Informe o serviço ou mão de obra.']);
         DB::transaction(function () use ($company, $workOrder, $data, $request, $audit): void {
             $order = ServiceWorkOrder::query()->whereKey($workOrder)->lockForUpdate()->firstOrFail();
-            if (! in_array($order->status, ['open', 'diagnosis', 'awaiting_quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part'], true) || $order->stock_applied_at) {
+            if (! in_array($order->status, ['open', 'diagnosis', 'awaiting_quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part', 'in_progress'], true) || $order->stock_applied_at) {
                 throw ValidationException::withMessages(['items' => 'Os itens só podem ser alterados antes da conclusão do serviço.']);
             }
             $product = null;
