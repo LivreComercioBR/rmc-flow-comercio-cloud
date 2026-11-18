@@ -142,8 +142,6 @@
     };
     customerSearch?.addEventListener('input', renderCustomers);
     customerSearch?.addEventListener('focus', () => { if (customerSearch.value && !customer.value) renderCustomers(); });
-    const initialCustomer = customerData.find(entry => entry.dataset.id === customer.value);
-    if (initialCustomer) chooseCustomer(initialCustomer);
     const asset = document.getElementById('service_asset_id');
     document.getElementById('add-asset-fields')?.addEventListener('click', () => {
         asset.value = '';
@@ -166,6 +164,8 @@
     customer?.addEventListener('change', syncAssets);
     asset?.addEventListener('change', syncAssets);
     syncAssets();
+    const initialCustomer = customerData.find(entry => entry.dataset.id === customer.value);
+    if (initialCustomer) chooseCustomer(initialCustomer);
 
     const list = document.getElementById('work-order-items');
     const template = document.getElementById('work-order-item-template');
