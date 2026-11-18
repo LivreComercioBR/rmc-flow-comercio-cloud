@@ -55,7 +55,12 @@
   });
   list.addEventListener('click', (event) => {
     const button = event.target.closest('.remove-item');
-    if (button && list.querySelectorAll('.purchase-item').length > 1) button.closest('.purchase-item').remove();
+    if (button && list.querySelectorAll('.purchase-item').length > 1) {
+      button.closest('.purchase-item').remove();
+      totalCents = getPurchaseTotalCents();
+      if (!customAmounts) setDefaultAmounts();
+      updateTotals();
+    }
   });
   const installmentCount = document.getElementById('installment_count');
   const dueDates = document.getElementById('purchase-due-dates');
@@ -170,6 +175,7 @@
     renderDueDates();
   });
   list.addEventListener('input', () => {
+    totalCents = getPurchaseTotalCents();
     if (!customAmounts) setDefaultAmounts();
     updateTotals();
   });
