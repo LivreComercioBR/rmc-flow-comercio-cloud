@@ -7,6 +7,7 @@ use App\Models\AccountPayable;
 use App\Models\AccountReceivable;
 use App\Support\CompanyContext;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -22,11 +23,16 @@ final class CategoryController extends Controller
         return view('categories.index', compact('categories'));
     }
 
-    public function store(Request $request, CompanyContext $context): RedirectResponse
+    public function store(Request $request, CompanyContext $context): RedirectResponse|JsonResponse
     {
         $companyId = $context->id();
         abort_unless($companyId, 403);
-        Category::create($this->validated($request, $companyId) + ['company_id' => $companyId, 'status' => 'active']);
+        $category = Category::create($this->validated($request, $companyId) + ['company_id' => $companyId, 'status' => 'active']);
+
+        if ($request->expectsJson()) {
+            return response()->json(['id' => $category->id, 'name' => $category->name], 201);
+        }
+
         return redirect()->route('categories.index')->with('catalog_notice', 'Categoria cadastrada.');
     }
 
