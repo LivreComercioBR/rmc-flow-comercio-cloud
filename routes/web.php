@@ -202,6 +202,8 @@ Route::middleware('auth')->group(function (): void {
                 Route::post('/', [ServiceWorkOrderEntryController::class, 'store'])->middleware('throttle:20,1')->name('store');
                 Route::get('/{workOrder}', [ServiceWorkOrderController::class, 'show'])->whereNumber('workOrder')->name('show');
                 Route::post('/a-partir-do-orcamento/{quote}', [ServiceWorkOrderController::class, 'createFromQuote'])->whereNumber('quote')->middleware('throttle:10,1')->name('from-quote');
+                Route::post('/{workOrder}/itens', [ServiceWorkOrderController::class, 'addItem'])->whereNumber('workOrder')->middleware('throttle:30,1')->name('items.add');
+                Route::delete('/{workOrder}/itens/{item}', [ServiceWorkOrderController::class, 'removeItem'])->whereNumber('workOrder')->whereNumber('item')->name('items.remove');
                 Route::post('/{workOrder}/devolucoes', [ServiceWorkOrderController::class, 'refund'])->whereNumber('workOrder')->middleware('throttle:10,1')->name('refund');
                 Route::patch('/{workOrder}/situacao', [ServiceWorkOrderController::class, 'updateStatus'])->whereNumber('workOrder')->middleware('throttle:20,1')->name('status');
             });
