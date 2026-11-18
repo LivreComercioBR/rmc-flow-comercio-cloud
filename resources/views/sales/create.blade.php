@@ -65,7 +65,7 @@
             <div id="discount_error" class="error" role="alert"></div>
         </section>
 
-        <div class="grid" style="max-width:720px;margin-top:16px">
+        <div class="grid" id="receivable-fields" style="max-width:720px;margin-top:16px" hidden>
             <div class="field"><label for="installments">Parcelas do saldo em aberto</label><select name="installments" id="installments" style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit">@for ($i = 1; $i <= 12; $i++)<option value="{{ $i }}" @selected(old('installments', 1) == $i)>{{ $i }}x</option>@endfor</select></div>
             <div class="field"><label for="first_due_date">Vencimento da primeira parcela</label><input type="date" id="first_due_date" name="first_due_date" min="{{ now()->toDateString() }}" value="{{ old('first_due_date', now()->toDateString()) }}" style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"></div>
         </div>
@@ -123,7 +123,9 @@
         document.getElementById('subtotal_display').textContent = money(subtotal);
         document.getElementById('total_display').textContent = money(totalCents);
         document.getElementById('paid_display').textContent = money(paidCents);
-        document.getElementById('balance_display').textContent = money(Math.max(0, totalCents - paidCents));
+        const balanceCents = Math.max(0, totalCents - paidCents);
+        document.getElementById('balance_display').textContent = money(balanceCents);
+        document.getElementById('receivable-fields').hidden = balanceCents === 0;
         const discountError = document.getElementById('discount_error');
         discountError.textContent = discountCents >= subtotal && discountCents > 0 ? 'O desconto deve ser menor que o subtotal.' : '';
         document.getElementById('confirm_sale').disabled = cart.size === 0 || (discountCents >= subtotal && discountCents > 0);
