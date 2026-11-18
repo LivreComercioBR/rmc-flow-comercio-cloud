@@ -27,6 +27,40 @@ final class ServiceAssetController extends Controller
         return view('services.assets.index', compact('assets', 'filters', 'search'));
     }
 
+    public function create(CompanyContext $context): View
+    {
+        abort_unless($context->id(), 403);
+
+        return view('services.assets.create', [
+            'customers' => Customer::query()->orderBy('name')->get(),
+        ]);
+    }
+
+    public function storeStandalone(Request $request, CompanyContext $context, AuditTrailService $audit): RedirectResponse
+    {
+        $companyId = $context->id();
+        abort_unless($companyId, 403);
+        $data = $request->validate([
+            'customer_id' => ['required', 'integer', Rule::exists('customers', 'id')->where('company_id', $companyId)],
+            'asset_type' => ['required', Rule::in(['vehicle', 'motorcycle', 'equipment', 'other'])],
+            'name' => ['required', 'string', 'max:180'],
+            'manufacturer' => ['nullable', 'string', 'max:120'],
+            'model' => ['nullable', 'string', 'max:120'],
+            'year' => ['nullable', 'integer', 'min:1900', 'max:'.(now()->year + 2)],
+            'color' => ['nullable', 'string', 'max:60'],
+            'identifier' => ['nullable', 'string', 'max:80'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+        $customer = Customer::query()->findOrFail($data['customer_id']);
+        $asset = DB::transaction(function () use ($data, $companyId, $customer, $audit, $request): ServiceAsset {
+            $asset = ServiceAsset::create($data + ['company_id' => $companyId, 'status' => 'active']);
+            $audit->record((int) $companyId, 'service.asset_created', 'Veículo/equipamento cadastrado para '.$customer->name.'.', (int) $request->user()->id, 'service_asset', (int) $asset->id, ['customer_id' => (int) $customer->id, 'asset_type' => $asset->asset_type, 'identifier' => $asset->identifier]);
+            return $asset;
+        });
+
+        return redirect()->route('services.assets.show', $asset->id)->with('asset_notice', 'Veículo/equipamento cadastrado e pronto para receber histórico de serviços.');
+    }
+
     public function show(int $asset, CompanyContext $context): View
     {
         abort_unless($context->id(), 403);
