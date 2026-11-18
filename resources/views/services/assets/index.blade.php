@@ -9,6 +9,7 @@
             <p class="muted">Pesquise por placa, série, nome, fabricante, modelo, tipo ou cliente. Cadastros podem ser feitos na ficha do cliente ou durante a abertura da OS.</p>
         </div>
         <div class="actions">
+            <a class="btn" href="{{ route('services.assets.create') }}">Cadastrar veículo / equipamento</a>
             <a class="btn secondary" href="{{ route('services.work-orders.index') }}">Ordens de serviço</a>
             <a class="btn secondary" href="{{ route('customers.index') }}">Clientes</a>
             <a class="btn secondary" href="{{ route('dashboard') }}">Painel</a>
