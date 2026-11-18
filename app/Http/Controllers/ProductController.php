@@ -44,7 +44,7 @@ final class ProductController extends Controller
         return view('products.create', ['categories' => $this->activeCategories()]);
     }
 
-    public function store(Request $request, CompanyContext $context, StockMovementService $stock): RedirectResponse
+    public function store(Request $request, CompanyContext $context, StockMovementService $stock): RedirectResponse|View
     {
         $companyId = $context->id();
         abort_unless($companyId, 403);
@@ -70,6 +70,10 @@ final class ProductController extends Controller
             });
         } catch (QueryException $exception) {
             return back()->withInput()->withErrors(['sku' => 'SKU ou código de barras já está cadastrado nesta empresa.']);
+        }
+
+        if ($request->boolean('purchase_popup')) {
+            return redirect()->route('purchases.create', ['purchase_popup' => 1, 'new_product_id' => $product->id]);
         }
 
         return redirect()->route('products.index')->with('catalog_notice', 'Produto cadastrado.');
