@@ -55,7 +55,11 @@ final class FinancialSummaryController extends Controller
     private function addTotals($rows, $query, string $column): void
     {
         foreach ($query->selectRaw('payment_method, SUM(amount_cents) as total_cents')->groupBy('payment_method')->get() as $record) {
-            if ($rows->has($record->payment_method)) $rows[$record->payment_method][$column] += (int) $record->total_cents;
+            if (! $rows->has($record->payment_method)) continue;
+
+            $totals = $rows->get($record->payment_method);
+            $totals[$column] += (int) $record->total_cents;
+            $rows->put($record->payment_method, $totals);
         }
     }
 }
