@@ -19,6 +19,7 @@ use App\Services\AuditTrailService;
 use App\Services\Cash\CashRegisterService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class SaleService
@@ -67,8 +68,8 @@ final class SaleService
             }
             foreach ($products as $product) $this->stock->record($product, 'exit', $quantitiesByProduct[$product->id], 'Venda #'.$saleNumber, $userId);
 
-            foreach ($data['payments'] ?? [] as $paymentIndex => $payment) {
-                $row = SalePayment::create(['company_id' => $companyId, 'sale_id' => $sale->id, 'payment_method' => $payment['method'], 'amount_cents' => $payment['amount_cents'], 'reference' => $payment['reference'] ?? null, 'request_key' => $data['request_key'].':'.$paymentIndex, 'paid_at' => now()]);
+            foreach ($data['payments'] ?? [] as $payment) {
+                $row = SalePayment::create(['company_id' => $companyId, 'sale_id' => $sale->id, 'payment_method' => $payment['method'], 'amount_cents' => $payment['amount_cents'], 'reference' => $payment['reference'] ?? null, 'request_key' => (string) Str::uuid(), 'paid_at' => now()]);
                 if ($payment['method'] === 'cash') $this->recordCashIn($row, $saleNumber, $userId);
             }
 
