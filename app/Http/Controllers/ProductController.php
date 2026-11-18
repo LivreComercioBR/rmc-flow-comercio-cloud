@@ -44,7 +44,7 @@ final class ProductController extends Controller
         return view('products.create', ['categories' => $this->activeCategories()]);
     }
 
-    public function store(Request $request, CompanyContext $context, StockMovementService $stock): RedirectResponse|View
+    public function store(Request $request, CompanyContext $context, StockMovementService $stock): RedirectResponse
     {
         $companyId = $context->id();
         abort_unless($companyId, 403);
