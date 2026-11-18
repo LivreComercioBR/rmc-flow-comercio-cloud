@@ -209,7 +209,9 @@
     const selects = [...list.querySelectorAll('select[name$="[product_id]"]'), template.content.querySelector('select')];
     selects.forEach((select) => {
       if (![...select.options].some(option => option.value === String(product.id))) {
-        select.add(new Option(optionLabel, String(product.id)));
+        const option = new Option(optionLabel, String(product.id));
+        option.dataset.search = [product.name, product.sku, product.barcode].filter(Boolean).join(' ');
+        select.add(option);
       }
     });
     let target = [...list.querySelectorAll('select[name$="[product_id]"]')].find(select => !select.value);
@@ -237,6 +239,8 @@ if (window.opener && !window.opener.closed) {
             name: @json($newlyCreatedProduct->name),
             unit: @json($newlyCreatedProduct->unit),
             stock_quantity: @json($newlyCreatedProduct->stock_quantity),
+            sku: @json($newlyCreatedProduct->sku),
+            barcode: @json($newlyCreatedProduct->barcode),
         },
     }, window.location.origin);
     window.setTimeout(() => window.close(), 400);
