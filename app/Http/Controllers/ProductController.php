@@ -69,7 +69,7 @@ final class ProductController extends Controller
                 return $product;
             });
         } catch (QueryException $exception) {
-            return back()->withInput()->withErrors(['sku' => 'SKU ou c�digo de barras j� est� cadastrado nesta empresa.']);
+            return back()->withInput()->withErrors(['sku' => 'SKU ou código de barras já está cadastrado nesta empresa.']);
         }
 
         return redirect()->route('products.index')->with('catalog_notice', 'Produto cadastrado.');
@@ -93,7 +93,7 @@ final class ProductController extends Controller
         try {
             $record->update($data);
         } catch (QueryException $exception) {
-            return back()->withInput()->withErrors(['sku' => 'SKU ou c�digo de barras j� est� cadastrado nesta empresa.']);
+            return back()->withInput()->withErrors(['sku' => 'SKU ou código de barras já está cadastrado nesta empresa.']);
         }
         return redirect()->route('products.index')->with('catalog_notice', 'Produto atualizado.');
     }
@@ -145,11 +145,11 @@ final class ProductController extends Controller
             'operational_cost_rate' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
             'profit_rate' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
             'other_costs' => ['nullable', 'numeric', 'min:0', 'max:42949672.95', 'regex:/^\d+(?:[.,]\d{1,2})?$/'],
-            'minimum_stock' => ['required', 'numeric', 'min:0', 'max:999999999.999', 'regex:/^\d+(?:[.,]\d{1,3})?$/'],
+            'minimum_stock' => ['required', 'integer', 'min:0', 'max:999999999'],
             'shelf' => ['nullable', 'string', 'max:80'],
         ];
         if ($includeInitialStock) {
-            $rules['initial_stock'] = ['nullable', 'numeric', 'min:0', 'max:999999999.999', 'regex:/^\d+(?:[.,]\d{1,3})?$/'];
+            $rules['initial_stock'] = ['nullable', 'integer', 'min:0', 'max:999999999'];
         }
         return $request->validate($rules);
     }
