@@ -8,9 +8,58 @@
         <div class="field"><label for="financial_category_id">Categoria (opcional)</label><div class="actions" style="align-items:stretch"><select id="financial_category_id" name="financial_category_id" style="flex:1;min-width:200px;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"><option value="">Sem categoria</option>@foreach ($categories as $category)<option value="{{ $category->id }}" @selected((string)old('financial_category_id') === (string)$category->id)>{{ $category->name }}</option>@endforeach</select><button type="button" class="btn secondary" id="open-category-dialog">Cadastrar categoria</button></div></div>
         <div class="field"><label for="amount">Valor total (R$)</label><input id="amount" name="amount" type="number" min="0.01" step="0.01" required value="{{ old('amount') }}"></div>
         <div class="field"><label for="installments">Parcelas</label><select id="installments" name="installments" style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit">@for($i=1;$i<=24;$i++)<option value="{{ $i }}" @selected((int)old('installments', 1) === $i)>{{ $i }}x</option>@endfor</select></div>
-        <div class="field"><label for="first_due_date">Vencimento da primeira parcela</label><input id="first_due_date" name="first_due_date" type="date" required value="{{ old('first_due_date', now()->toDateString()) }}"></div>
+        <div class="field" style="grid-column:1/-1"><span class="label">Vencimentos das parcelas</span><p class="muted" style="margin:0">Confira e ajuste individualmente as datas conforme o prazo combinado. As datas iniciais são sugeridas mês a mês.</p><div id="installment-due-dates" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"></div></div>
         <div style="align-self:end"><button class="btn">Salvar despesa</button></div>
     </form>
+    <script>
+    (() => {
+        const count = document.getElementById('installments');
+        const container = document.getElementById('installment-due-dates');
+        const oldDates = @json(old('due_dates', []));
+        let firstDate = oldDates[0] || @json(now()->toDateString());
+
+        const plusMonths = (value, months) => {
+            const [year, month, day] = value.split('-').map(Number);
+            const target = new Date(year, month - 1 + months, 1);
+            const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+            target.setDate(Math.min(day, lastDay));
+            return [target.getFullYear(), String(target.getMonth() + 1).padStart(2, '0'), String(target.getDate()).padStart(2, '0')].join('-');
+        };
+
+        const render = () => {
+            const inputs = [];
+            container.replaceChildren();
+            for (let i = 0; i < Number(count.value); i++) {
+                const field = document.createElement('div');
+                field.className = 'field';
+                const label = document.createElement('label');
+                label.htmlFor = `due_date_${i}`;
+                label.textContent = `Parcela ${i + 1} — vencimento`;
+                const input = document.createElement('input');
+                input.type = 'date';
+                input.id = label.htmlFor;
+                input.name = `due_dates[${i}]`;
+                input.required = true;
+                input.value = oldDates[i] || plusMonths(firstDate, i);
+                input.addEventListener('change', () => {
+                    if (i === 0) {
+                        firstDate = input.value;
+                        inputs.forEach((other, index) => {
+                            if (index > 0 && !other.dataset.edited) other.value = plusMonths(firstDate, index);
+                        });
+                    }
+                    input.dataset.edited = 'true';
+                });
+                inputs.push(input);
+                field.append(label, input);
+                container.append(field);
+            }
+        };
+
+        count.addEventListener('change', render);
+        render();
+    })();
+    </script>
 
     <dialog id="quick-category-dialog" style="width:min(460px,calc(100% - 32px));border:1px solid #dbe3ed;border-radius:14px;padding:24px;box-shadow:0 20px 60px #0b1f3a33">
         <form id="quick-category-form" method="post" action="{{ route('categories.store') }}">
