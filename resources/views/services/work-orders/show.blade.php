@@ -228,6 +228,13 @@
         <?php if ($order->stock_applied_at) { ?><p class="muted">Peças baixadas do estoque em {{ $order->stock_applied_at->format('d/m/Y H:i') }}.<?php if ($order->stock_reversed_at) { ?> Estorno em {{ $order->stock_reversed_at->format('d/m/Y H:i') }}<?php } ?></p><?php } ?>
     </div>
 
+    <?php if ($order->status === 'approved') { ?>
+        <form class="no-print" method="post" action="{{ route('services.work-orders.status', $order->id) }}" style="margin:18px 0">
+            <?= csrf_field() ?><?= method_field('PATCH') ?>
+            <input type="hidden" name="status" value="in_maintenance">
+            <button class="btn" type="submit">Avançar status para Em manutenção</button>
+        </form>
+    <?php } ?>
     <?php if ($order->status !== 'cancelled' && $order->status !== 'finalized' && ($nextStatuses || $canRequestCancellation)) { ?>
         <div class="no-print" style="border-top:1px solid #e1e8f0;padding-top:18px">
             <h2>Atualizar andamento</h2>
