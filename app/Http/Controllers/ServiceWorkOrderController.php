@@ -317,7 +317,7 @@ final class ServiceWorkOrderController extends Controller
         $company = $context->company();
         abort_unless($company, 403);
         $credentials = $this->extractApprovalCredentials($request);
-        $data = $request->validate(['status' => ['required', Rule::in(array_keys(self::STATUSES))], 'diagnosis' => ['required_if:status,awaiting_quote', 'nullable', 'string', 'max:4000'], 'notes' => ['nullable', 'string', 'max:4000'], 'warranty_days' => ['nullable', 'integer', 'min:0', 'max:3650'], 'reason' => ['required_if:status,cancelled', 'nullable', 'string', 'min:5', 'max:180']]);
+        $data = $request->validate(['status' => ['required', Rule::in(array_keys(self::STATUSES))], 'diagnosis' => ['required_if:status,awaiting_quote,quote', 'nullable', 'string', 'max:4000'], 'notes' => ['nullable', 'string', 'max:4000'], 'warranty_days' => ['nullable', 'integer', 'min:0', 'max:3650'], 'reason' => ['required_if:status,cancelled', 'nullable', 'string', 'min:5', 'max:180']]);
         $approverId = $data['status'] === 'cancelled' ? $this->authorizeCancellation($request, $credentials) : null;
         DB::transaction(function () use ($company, $workOrder, $data, $request, $stock, $audit, $approverId): void {
             $order = ServiceWorkOrder::query()->with('items')->whereKey($workOrder)->lockForUpdate()->firstOrFail();
@@ -329,10 +329,14 @@ final class ServiceWorkOrderController extends Controller
                     'ready' => ['finalized', 'cancelled'], default => ['cancelled'],
                 }
                 : array_values(array_unique(array_merge(
-                    array_diff(['open', 'diagnosis', 'awaiting_quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part', 'completed', 'awaiting_payment'], [$current]),
+                    array_diff(['open', 'diagnosis', 'awaiting_quote', 'quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part', 'in_progress', 'completed', 'awaiting_payment'], [$current]),
                     ['cancelled']
                 )));
             if (! in_array($target, $allowed, true)) throw ValidationException::withMessages(['status' => 'Esta ordem não permite a mudança de situação solicitada.']);
+
+            if ($target === 'awaiting_approval' && ! $order->items()->exists()) {
+                throw ValidationException::withMessages(['status' => 'Adicione as peças e os serviços ao orçamento antes de enviá-lo para aprovação.']);
+            }
 
             if ($target === 'ready') {
                 $receivable = AccountReceivable::query()->where('service_work_order_id', $order->id)->lockForUpdate()->first();
