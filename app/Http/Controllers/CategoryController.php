@@ -52,11 +52,11 @@ final class CategoryController extends Controller
             || AccountReceivable::query()->where('financial_category_id', $record->id)->exists();
 
         if ($isReferenced) {
-            return redirect()->route('categories.index')->with('catalog_error', 'Esta categoria j� est� vinculada a produtos ou lan�amentos financeiros. Desative-a para preservar o hist�rico.');
+            return redirect()->route('categories.index')->with('catalog_error', 'Esta categoria já está vinculada a produtos ou lançamentos financeiros. Desative-a para preservar o histórico.');
         }
 
         $record->delete();
-        return redirect()->route('categories.index')->with('catalog_notice', 'Categoria exclu�da.');
+        return redirect()->route('categories.index')->with('catalog_notice', 'Categoria excluída.');
     }
 
     private function findForCompany(int $category, CompanyContext $context): Category
