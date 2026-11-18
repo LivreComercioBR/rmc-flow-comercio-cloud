@@ -89,7 +89,7 @@ final class ServiceWorkOrderController extends Controller
         $defaultRefundMethod = $refundOptions->keys()->first();
         if (! $cashSessionOpen && $defaultRefundMethod === 'cash') $defaultRefundMethod = $refundOptions->keys()->skip(1)->first();
 
-        return view('services.work-orders.show', ['order' => $order, 'statuses' => self::STATUSES, 'nextStatuses' => $next, 'cashSessionOpen' => $cashSessionOpen, 'role' => $role, 'canRequestCancellation' => in_array($role, ['Administrador', 'Atendente'], true), 'refundOptions' => $refundOptions, 'defaultRefundMethod' => $defaultRefundMethod, 'refundRequestKey' => (string) Str::uuid()]);
+        return view('services.work-orders.show', ['order' => $order, 'products' => Product::query()->where('company_id', $context->id())->where('status', 'active')->orderBy('name')->get(), 'statuses' => self::STATUSES, 'nextStatuses' => $next, 'cashSessionOpen' => $cashSessionOpen, 'role' => $role, 'canRequestCancellation' => in_array($role, ['Administrador', 'Atendente'], true), 'refundOptions' => $refundOptions, 'defaultRefundMethod' => $defaultRefundMethod, 'refundRequestKey' => (string) Str::uuid()]);
     }
 
     public function createFromQuote(Request $request, int $quote, CompanyContext $context, AuditTrailService $audit): RedirectResponse
@@ -318,9 +318,12 @@ final class ServiceWorkOrderController extends Controller
             $current = $order->status;
             $target = $data['status'];
             $allowed = match ($current) {
-                'open' => ['diagnosis', 'in_progress', 'cancelled'], 'diagnosis' => ['in_progress', 'cancelled'],
-                'in_progress' => ['completed', 'cancelled'], 'completed' => ['awaiting_payment', 'cancelled'],
-                'awaiting_payment' => ['cancelled'], 'ready' => ['finalized', 'cancelled'], 'finalized' => ['cancelled'], default => [],
+                'open' => ['diagnosis', 'cancelled'], 'diagnosis' => ['awaiting_quote', 'cancelled'],
+                'awaiting_quote' => ['awaiting_approval', 'cancelled'], 'awaiting_approval' => ['approved', 'awaiting_quote', 'cancelled'],
+                'approved' => ['in_maintenance', 'awaiting_quote', 'cancelled'], 'in_maintenance' => ['awaiting_part', 'completed', 'cancelled'],
+                'awaiting_part' => ['in_maintenance', 'completed', 'cancelled'], 'in_progress' => ['completed', 'cancelled'],
+                'completed' => ['awaiting_payment', 'cancelled'], 'awaiting_payment' => ['ready', 'cancelled'],
+                'ready' => ['finalized', 'cancelled'], 'finalized' => ['cancelled'], default => [],
             };
             if (! in_array($target, $allowed, true)) throw ValidationException::withMessages(['status' => 'Esta ordem não permite a mudança de situação solicitada.']);
 
