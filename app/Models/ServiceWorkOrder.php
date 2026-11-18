@@ -12,11 +12,11 @@ class ServiceWorkOrder extends Model
 {
     use ScopesToCompany;
 
-    protected $fillable = ['company_id', 'work_order_number', 'customer_id', 'service_quote_id', 'service_appointment_id', 'service_asset_id', 'asset_type', 'asset_description', 'asset_identifier', 'asset_manufacturer', 'asset_model', 'asset_year', 'asset_color', 'status', 'complaint', 'diagnosis', 'notes', 'warranty_days', 'opened_at', 'completed_at', 'finalized_at', 'stock_applied_at', 'stock_reversed_at', 'cancelled_at', 'cancelled_by', 'cancelled_approved_by', 'cancellation_reason', 'created_by'];
+    protected $fillable = ['company_id', 'work_order_number', 'customer_id', 'service_quote_id', 'service_appointment_id', 'service_asset_id', 'asset_type', 'asset_description', 'asset_identifier', 'asset_manufacturer', 'asset_model', 'asset_year', 'asset_color', 'expected_at', 'mileage', 'fuel_level', 'status', 'complaint', 'diagnosis', 'notes', 'warranty_days', 'opened_at', 'completed_at', 'finalized_at', 'stock_applied_at', 'stock_reversed_at', 'cancelled_at', 'cancelled_by', 'cancelled_approved_by', 'cancellation_reason', 'created_by'];
 
     protected function casts(): array
     {
-        return ['opened_at' => 'datetime', 'completed_at' => 'datetime', 'finalized_at' => 'datetime', 'stock_applied_at' => 'datetime', 'stock_reversed_at' => 'datetime', 'cancelled_at' => 'datetime'];
+        return ['expected_at' => 'date', 'opened_at' => 'datetime', 'completed_at' => 'datetime', 'finalized_at' => 'datetime', 'stock_applied_at' => 'datetime', 'stock_reversed_at' => 'datetime', 'cancelled_at' => 'datetime'];
     }
 
     public function customer(): BelongsTo { return $this->belongsTo(Customer::class); }
