@@ -5,8 +5,8 @@
         <div><p class="muted" style="margin-bottom:8px">MÓDULO DE SERVIÇOS</p><h1 class="title">Catálogo de serviços</h1><p class="muted">Cadastre serviços com descrição e preço para usar nos próximos fluxos de atendimento.</p></div>
         <div class="actions"><a class="btn secondary" href="{{ route('services.appointments.index') }}">Agenda</a><a class="btn secondary" href="{{ route('services.quotes.index') }}">Orçamentos</a><a class="btn secondary" href="{{ route('dashboard') }}">Painel</a></div>
     </div>
-    @if (session('service_notice'))<div class="alert alert-warning" role="status">{{ session('service_notice') }}</div>@endif
-    @if ($errors->any())<div class="alert" role="alert">{{ $errors->first() }}</div>@endif
+    @if (session('service_notice'))<div class="alert alert-success" role="status">{{ session('service_notice') }}</div>@endif
+    @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
 
     @if ($role === 'Administrador')
     <details style="margin:18px 0"><summary class="btn" style="display:inline-flex">Adicionar serviço</summary>

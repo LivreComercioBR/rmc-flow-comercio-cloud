@@ -3,7 +3,7 @@
 <section class="card narrow">
     <h1 class="title">Pagamento confirmado</h1>
     <p class="muted">Agora cadastre sua empresa e o administrador. Plano {{ $intent->plan->name }} · até {{ $intent->plan->limits['users'] ?? 'ilimitados' }} usuários.</p>
-    <div class="alert alert-warning">A assinatura será vinculada à empresa após concluir este formulário.</div>
+    <div class="alert alert-warming">A assinatura será vinculada à empresa após concluir este formulário.</div>
     <form method="post" action="{{ route('checkout.register.complete', $intent->token) }}">
         @csrf
         <div class="grid">

@@ -151,7 +151,12 @@ final class PurchaseController extends Controller
             });
         } catch (QueryException $exception) {
             $existing = Purchase::query()->where('request_key', $data['request_key'])->first();
-            if ($existing) return redirect()->route('purchases.show', $existing->id)->with('purchase_notice', 'Esta compra já havia sido registrada.');
+            if ($existing) {
+                return redirect()->route('purchases.show', $existing->id)->with([
+                    'purchase_notice' => 'Esta compra já havia sido registrada.',
+                    'purchase_notice_type' => 'warming',
+                ]);
+            }
             if ($exception->getCode() === '23000') {
                 return back()->withInput()->withErrors(['invoice_number' => 'Esse número de nota já está registrado para este fornecedor.']);
             }

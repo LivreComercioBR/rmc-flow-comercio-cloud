@@ -3,8 +3,8 @@
 <section class="card narrow">
     <h1 class="title">Confirme seu e-mail</h1>
     <p class="muted">Confirme <strong>{{ auth()->user()->email }}</strong> para liberar as funções do sistema. O link expira em 60 minutos. Se não recebeu a mensagem, solicite outro link abaixo.</p>
-    @if(session('status'))<div class="alert" style="background:#eafaf1;color:#17643b;border-color:#b7ebc9">{{ session('status') }}</div>@endif
-    @if($errors->any())<div class="alert">{{ $errors->first() }}</div>@endif
+    @if(session('status'))<div class="alert alert-success">{{ session('status') }}</div>@endif
+    @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
     <form method="post" action="{{ route('verification.send') }}">@csrf<button class="btn wide" type="submit">Enviar outro link</button></form>
     <details style="margin-top:18px" @if($errors->has('new_email') || $errors->has('current_password')) open @endif>
         <summary style="cursor:pointer;color:#173b8f;font-weight:600">O e-mail est&aacute; incorreto? Alterar endere&ccedil;o</summary>

@@ -35,19 +35,22 @@ final class RetrySubscriptionPanelSyncController extends Controller
             ->first();
 
         if (! $event) {
-            return redirect()->route('subscription.status')->with('panel_sync_notice', 'Não há sincronizações pendentes para reenviar.');
+            return redirect()->route('subscription.status')->with([
+                'panel_sync_notice' => 'Não há sincronizações pendentes para reenviar.',
+                'panel_sync_notice_type' => 'warming',
+            ]);
         }
 
         $synced = $sync->send($event);
         $configurationMissing = $event->fresh()?->panel_sync_error === 'panel_configuration_incomplete';
 
-        return redirect()->route('subscription.status')->with(
-            'panel_sync_notice',
-            $synced
+        return redirect()->route('subscription.status')->with([
+            'panel_sync_notice' => $synced
                 ? 'Assinatura sincronizada com o painel central.'
                 : ($configurationMissing
                     ? 'A integração com o painel central não está configurada. O pagamento e a assinatura continuam registrados neste sistema.'
                     : 'A sincronização não foi concluída. Confira a configuração e tente novamente.'),
-        );
+            'panel_sync_notice_type' => $synced ? 'success' : 'danger',
+        ]);
     }
 }

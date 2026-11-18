@@ -1,11 +1,11 @@
 @extends('layouts.app', ['title' => 'Painel | RMC Flow Comércio Cloud'])
 @section('content')
-<section class="card">
+<section class="card dashboard-card">
     <p class="muted" style="margin-bottom:8px">PAINEL DA EMPRESA</p>
     <h1 class="title">{{ $company->trade_name }}</h1>
     <p class="muted">Resumo da operação da empresa.</p>
       @if($canAccessServiceCatalog)<div class="actions"><a class="btn secondary" href="{{ route('services.index') }}">Catálogo de serviços</a><a class="btn secondary" href="{{ route('services.assets.index') }}">Veículos / equipamentos</a><a class="btn secondary" href="{{ route('services.appointments.index') }}">Agenda</a><a class="btn secondary" href="{{ route('services.quotes.index') }}">Orçamentos</a><a class="btn secondary" href="{{ route('services.work-orders.index') }}">Ordens de serviço</a></div>@endif
-      @if($role === 'Mecânico')@if($servicesEnabled)<div class="alert alert-warning">Catálogo, agenda, orçamentos e ordens de serviço estão disponíveis conforme as permissões da equipe.</div>@else<div class="alert alert-warning">O módulo de serviços está desativado para esta empresa.</div>@endif @else
+      @if($role === 'Mecânico')@if($servicesEnabled)<div class="alert alert-warming">Catálogo, agenda, orçamentos e ordens de serviço estão disponíveis conforme as permissões da equipe.</div>@else<div class="alert alert-warming">O módulo de serviços está desativado para esta empresa.</div>@endif @else
     <form method="post" action="{{ route('dashboard.values.toggle') }}" style="margin-top:14px">@csrf<button class="btn secondary" type="submit">{{ $hideValues ? 'Exibir valores' : 'Ocultar valores' }}</button></form><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:22px 0">
         <a class="company" href="{{ route('customers.index') }}" style="display:block;text-decoration:none;color:inherit;margin:0"><span class="muted" style="display:block;margin:0 0 8px">Clientes ativos</span><strong style="font-size:26px;color:#102c4d">{{ number_format($customerCount, 0, ',', '.') }}</strong><span style="display:block;color:#0f3cff;margin-top:8px">Abrir cadastro de clientes →</span></a>
         <a class="company" href="{{ route('products.index') }}" style="display:block;text-decoration:none;color:inherit;margin:0"><span class="muted" style="display:block;margin:0 0 8px">Produtos / peças ativos</span><strong style="font-size:26px;color:#102c4d">{{ number_format($productCount, 0, ',', '.') }}</strong><span style="display:block;color:#0f3cff;margin-top:8px">Abrir catálogo →</span></a>

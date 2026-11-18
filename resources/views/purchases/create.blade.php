@@ -2,9 +2,9 @@
 @section('content')
 <section class="card">
     <p class="muted" style="margin-bottom:8px">FORNECIMENTO E ESTOQUE</p><h1 class="title">Registrar compra</h1><p class="muted">A confirmação adicionará os itens ao estoque e criará as parcelas em contas a pagar.</p>
-    @if ($errors->any())<div class="alert" role="alert">{{ $errors->first() }}</div>@endif
-    @if ($suppliers->isEmpty())<div class="alert">Cadastre um fornecedor antes de registrar uma compra. <a href="{{ route('suppliers.create') }}">Cadastrar fornecedor</a></div>@endif
-    @if ($products->isEmpty())<div class="alert">Cadastre ao menos um produto ou peça antes de registrar uma compra. <a href="{{ route('products.create') }}">Cadastrar produto</a></div>@endif
+    @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
+    @if ($suppliers->isEmpty())<div class="alert alert-warming">Cadastre um fornecedor antes de registrar uma compra. <a href="{{ route('suppliers.create') }}">Cadastrar fornecedor</a></div>@endif
+    @if ($products->isEmpty())<div class="alert alert-warming">Cadastre ao menos um produto ou peça antes de registrar uma compra. <a href="{{ route('products.create') }}">Cadastrar produto</a></div>@endif
     <form method="post" action="{{ route('purchases.store') }}" id="purchase-form">@csrf
         <input type="hidden" name="request_key" value="{{ old('request_key', $requestKey) }}">
         <div class="grid">
@@ -13,7 +13,7 @@
         </div>
         <div class="grid"><div class="field"><label for="purchased_at">Data da compra *</label><input id="purchased_at" name="purchased_at" type="date" required value="{{ old('purchased_at', now()->toDateString()) }}">@error('purchased_at')<div class="error">{{ $message }}</div>@enderror</div><div class="field"><label for="first_due_date">Vencimento da primeira parcela *</label><input id="first_due_date" name="first_due_date" type="date" required value="{{ old('first_due_date', now()->toDateString()) }}">@error('first_due_date')<div class="error">{{ $message }}</div>@enderror</div><div class="field"><label for="installment_count">Número de parcelas *</label><input id="installment_count" name="installment_count" type="number" min="1" max="36" required value="{{ old('installment_count', 1) }}">@error('installment_count')<div class="error">{{ $message }}</div>@enderror</div></div>
         <h2>Itens</h2>
-        @error('items')<div class="alert">{{ $message }}</div>@enderror
+        @error('items')<div class="alert alert-danger">{{ $message }}</div>@enderror
         <div id="purchase-items" style="display:grid;gap:10px">
             @foreach (old('items', [['product_id'=>'','quantity'=>'1.000','unit_cost'=>'0.00']]) as $index => $item)
                 <div class="purchase-item" style="display:grid;grid-template-columns:minmax(220px,2fr) minmax(110px,1fr) minmax(130px,1fr) auto;gap:10px;align-items:end;border:1px solid #e1e8f0;border-radius:10px;padding:12px">

@@ -3,7 +3,7 @@
 <section class="card narrow">
     <h1 class="title">Acesse sua conta</h1>
     <p class="muted">Entre para continuar no RMC Flow Comércio Cloud.</p>
-    @if($errors->any())<div class="alert">Confira o e-mail e a senha e tente novamente.</div>@endif
+    @if($errors->any())<div class="alert alert-danger">Confira o e-mail e a senha e tente novamente.</div>@endif
     <form method="post" action="{{ route('login.store') }}">
         @csrf
         <div class="field"><label for="email">E-mail</label><input id="email" name="email" type="email" value="{{ old('email') }}" autocomplete="username" required autofocus>@error('email')<div class="error">{{ $message }}</div>@enderror</div>

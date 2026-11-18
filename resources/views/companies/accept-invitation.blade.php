@@ -3,7 +3,7 @@
 <section class="card narrow">
     <p class="muted" style="margin-bottom:8px">CONVITE DE ACESSO</p><h1 class="title">{{ $invitation->company->trade_name }}</h1>
     <p class="muted">Você foi convidado(a) com o perfil <strong>{{ $invitation->role }}</strong>. O convite expira em {{ $invitation->expires_at->format('d/m/Y H:i') }}.</p>
-    @if($errors->any())<div class="alert" role="alert">{{ $errors->first() }}</div>@endif
+    @if($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
     <form method="post" action="{{ route('company-invitations.accept', ['token' => request()->route('token')]) }}">@csrf
         <div class="field"><label>E-mail da conta</label><input value="{{ $invitation->email }}" readonly></div>
         @if(!$existingUser && $needsPassword)<div class="field"><label for="invite_name">Seu nome</label><input id="invite_name" name="name" maxlength="190" required value="{{ old('name') }}"></div>@endif

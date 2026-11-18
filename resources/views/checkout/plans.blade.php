@@ -4,7 +4,7 @@
     <p class="muted" style="margin-bottom:8px">RMC FLOW COMÉRCIO CLOUD</p>
     <h1 class="title">Escolha o plano ideal para sua empresa</h1>
     <p class="muted">Pague com segurança pelo Mercado Pago. Após a confirmação, você cadastra a empresa e cria o acesso do administrador.</p>
-    @if($errors->has('checkout'))<div class="alert">{{ $errors->first('checkout') }}</div>@endif
+    @if($errors->has('checkout'))<div class="alert alert-danger">{{ $errors->first('checkout') }}</div>@endif
     <form method="post" action="{{ route('checkout.start') }}">
         @csrf
         <div class="field">

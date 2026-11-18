@@ -11,7 +11,7 @@
     <div id="service-assets" style="border-top:1px solid #e1e8f0;margin-top:28px;padding-top:20px">
         <h2>Veículos e equipamentos</h2><p class="muted">Cadastre os itens atendidos para reutilizá-los nas ordens de serviço e consultar o histórico por veículo/equipamento.</p>
         @if(session('asset_notice'))<div class="alert alert-success" role="status">{{ session('asset_notice') }}</div>@endif
-        @if($errors->any())<div class="alert" role="alert">{{ $errors->first() }}</div>@endif
+        @if($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
         <details style="margin:14px 0"><summary class="btn secondary">Cadastrar veículo/equipamento</summary>
             <form method="post" action="{{ route('services.assets.store', $record->id) }}" class="grid" style="max-width:950px;margin-top:14px">@csrf
                 <div class="field"><label for="asset_type">Tipo</label><select id="asset_type" name="asset_type" required style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"><option value="vehicle">Veículo</option><option value="motorcycle">Motocicleta</option><option value="equipment">Equipamento</option><option value="other">Outro</option></select></div>

@@ -2,8 +2,8 @@
 @section('content')
 <section class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap"><div><p class="muted" style="margin-bottom:8px">MÓDULO DE SERVIÇOS</p><h1 class="title">Agenda</h1><p class="muted">Agendamentos são salvos com o serviço e o preço combinados, preservando o histórico do catálogo.</p></div><div class="actions"><a class="btn" href="{{ route('services.appointments.create') }}">Novo agendamento</a><a class="btn secondary" href="{{ route('services.quotes.index') }}">Orçamentos</a><a class="btn secondary" href="{{ route('services.index') }}">Catálogo</a><a class="btn secondary" href="{{ route('dashboard') }}">Painel</a></div></div>
-    @if (session('appointment_notice'))<div class="alert alert-warning" role="status">{{ session('appointment_notice') }}</div>@endif
-    @if ($errors->any())<div class="alert" role="alert">{{ $errors->first() }}</div>@endif
+    @if (session('appointment_notice'))<div class="alert alert-success" role="status">{{ session('appointment_notice') }}</div>@endif
+    @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
     <form method="get" class="grid" style="max-width:980px;margin:18px 0">
         <div class="field"><label for="from">De</label><input id="from" name="from" type="date" value="{{ $filters['from'] ?? '' }}"></div>
         <div class="field"><label for="to">Até</label><input id="to" name="to" type="date" value="{{ $filters['to'] ?? '' }}"></div>

@@ -2,9 +2,9 @@
 @section('content')
 <section class="card">
     @if (session('sale_notice'))<div class="alert alert-success">{{ session('sale_notice') }}</div>@endif
-    @if ($errors->any())<div class="alert" role="alert">{{ $errors->first() }}</div>@endif
+    @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
     <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap"><div><p class="muted">VENDA</p><h1 class="title">Venda #{{ $sale->sale_number }} @if($sale->status === 'cancelled')<span style="color:#b42318">(Cancelada)</span>@endif</h1><p class="muted">{{ $sale->sold_at->format('d/m/Y H:i') }} · {{ $sale->customer?->name ?? 'Consumidor' }}</p></div><div class="actions"><a class="btn secondary" href="{{ route('sales.index') }}">Voltar às vendas</a><a class="btn" href="{{ route('sales.create') }}">Nova venda</a></div></div>
-    @if ($sale->status === 'cancelled')<div class="alert alert-warning">Cancelada em {{ $sale->cancelled_at?->format('d/m/Y H:i') }}. Motivo: {{ $sale->cancellation_reason }}. Solicitante: {{ $sale->cancelledBy?->name ?? 'Sistema' }}. Autorizada por: {{ $sale->cancellationApprover?->name ?? '—' }}.</div>@endif
+    @if ($sale->status === 'cancelled')<div class="alert alert-warming">Cancelada em {{ $sale->cancelled_at?->format('d/m/Y H:i') }}. Motivo: {{ $sale->cancellation_reason }}. Solicitante: {{ $sale->cancelledBy?->name ?? 'Sistema' }}. Autorizada por: {{ $sale->cancellationApprover?->name ?? '—' }}.</div>@endif
     <h2>Itens</h2><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left"><thead><tr><th style="padding:8px">Produto</th><th style="padding:8px">Quantidade</th><th style="padding:8px">Preço unitário</th><th style="padding:8px">Total</th></tr></thead><tbody>@foreach ($sale->items as $item)<tr><td style="padding:8px">{{ $item->product_name }}</td><td style="padding:8px">{{ $item->quantity }}</td><td style="padding:8px">R$ {{ number_format($item->unit_price_cents / 100, 2, ',', '.') }}</td><td style="padding:8px">R$ {{ number_format($item->line_total_cents / 100, 2, ',', '.') }}</td></tr>@endforeach</tbody></table></div>
     <p style="text-align:right">Subtotal: R$ {{ number_format($sale->subtotal_cents / 100, 2, ',', '.') }}<br>Desconto: R$ {{ number_format($sale->discount_cents / 100, 2, ',', '.') }}<br><strong>Total: R$ {{ number_format($sale->total_cents / 100, 2, ',', '.') }}</strong><br>Recebido: R$ {{ number_format($sale->paid_cents / 100, 2, ',', '.') }} · Em aberto: R$ {{ number_format($sale->balance_cents / 100, 2, ',', '.') }}</p>
     <h2>Pagamentos registrados</h2>@forelse ($sale->payments as $payment)<p>{{ ['cash'=>'Dinheiro','pix'=>'PIX','debit_card'=>'Débito','credit_card'=>'Crédito','bank_transfer'=>'Transferência','other'=>'Outro'][$payment->payment_method] ?? $payment->payment_method }} — R$ {{ number_format($payment->amount_cents / 100, 2, ',', '.') }} · {{ $payment->paid_at->format('d/m/Y H:i') }}</p>@empty<p class="muted">Nenhum recebimento no ato.</p>@endforelse
@@ -19,7 +19,7 @@
         @endforelse
         <h2>Registrar devolução</h2>
         <p class="muted">A devolução deve usar uma forma original de pagamento e não pode ultrapassar o saldo recebido por ela. Em dinheiro, a saída será registrada no caixa aberto da empresa no momento da devolução; caixa fechado não é alterado.</p>
-        @if($refundOptions->isEmpty())<div class="alert alert-warning">Não há saldo recebido disponível para devolução.</div>@else
+        @if($refundOptions->isEmpty())<div class="alert alert-warming">Não há saldo recebido disponível para devolução.</div>@else
         <form method="post" action="{{ route('sales.refund', $sale) }}" class="grid" style="max-width:850px">@csrf
             <input type="hidden" name="request_key" value="{{ $refundRequestKey }}">
             <div class="field"><label for="refund_amount">Valor (R$)</label><input id="refund_amount" name="amount" type="number" min="0.01" step="0.01" required value="{{ old('amount') }}"></div>

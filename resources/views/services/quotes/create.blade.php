@@ -3,9 +3,9 @@
 <section class="card">
     @php($editing = isset($quote))
     <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap"><div><p class="muted" style="margin-bottom:8px">MÓDULO DE SERVIÇOS</p><h1 class="title">{{ $editing ? 'Editar orçamento #'.str_pad((string)$quote->quote_number, 5, '0', STR_PAD_LEFT) : 'Novo orçamento' }}</h1><p class="muted">O orçamento não altera estoque, Caixa ou financeiro.</p></div><a class="btn secondary" href="{{ route('services.quotes.index') }}">Voltar aos orçamentos</a></div>
-    @if ($errors->any())<div class="alert" role="alert">{{ $errors->first() }}</div>@endif
-    @if ($customers->isEmpty())<div class="alert alert-warning">Cadastre um cliente antes de criar o orçamento.</div>@endif
-    @if ($services->isEmpty() && $products->isEmpty())<div class="alert alert-warning">O catálogo ainda está vazio. Cadastre serviços ou produtos ou use itens manuais.</div>@endif
+    @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
+    @if ($customers->isEmpty())<div class="alert alert-warming">Cadastre um cliente antes de criar o orçamento.</div>@endif
+    @if ($services->isEmpty() && $products->isEmpty())<div class="alert alert-warming">O catálogo ainda está vazio. Cadastre serviços ou produtos ou use itens manuais.</div>@endif
     <form method="post" action="{{ $editing ? route('services.quotes.update', $quote->id) : route('services.quotes.store') }}" id="quote-form" style="margin-top:20px">@csrf @if($editing)@method('PUT')@endif<input type="hidden" name="request_key" value="{{ old('request_key', $requestKey) }}">
         <div class="grid" style="max-width:960px">
             <div class="field"><label for="customer_id">Cliente</label><select id="customer_id" name="customer_id" required style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"><option value="">Selecione</option>@foreach($customers as $customer)<option value="{{ $customer->id }}" @selected((string)old('customer_id', $customerId) === (string)$customer->id)>{{ $customer->name }}{{ $customer->phone ? ' — '.$customer->phone : '' }}</option>@endforeach</select>@if(auth()->user()->companyMemberships()->where('company_id', $companyId)->where('status', 'active')->where('role', 'Administrador')->exists())<a href="{{ route('customers.create') }}" target="_blank" rel="noopener">Cadastrar cliente em outra aba</a>@endif @error('customer_id')<div class="error">{{ $message }}</div>@enderror</div>

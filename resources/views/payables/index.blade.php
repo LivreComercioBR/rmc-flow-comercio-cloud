@@ -2,12 +2,12 @@
 @section('content')
 <section class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap"><div><p class="muted" style="margin-bottom:8px">FINANCEIRO</p><h1 class="title">Contas a pagar</h1></div><div class="actions"><a class="btn" href="{{ route('payables.manual.create') }}">Lançar despesa</a><a class="btn secondary" href="{{ route('categories.index') }}">Categorias</a><a class="btn secondary" href="{{ route('cash.index') }}">Caixa</a><a class="btn secondary" href="{{ route('purchases.index') }}">Compras</a><a class="btn secondary" href="{{ route('suppliers.index') }}">Fornecedores</a></div></div>
-    @if (session('payable_notice'))<div class="alert alert-warning" role="status">{{ session('payable_notice') }}</div>@endif
-    @if ($errors->has('payment'))<div class="alert" role="alert">{{ $errors->first('payment') }}</div>@endif
-    @if ($errors->any() && ! $errors->has('payment'))<div class="alert" role="alert">{{ $errors->first() }}</div>@endif
+    @if (session('payable_notice'))<div class="alert alert-success" role="status">{{ session('payable_notice') }}</div>@endif
+    @if ($errors->has('payment'))<div class="alert alert-danger" role="alert">{{ $errors->first('payment') }}</div>@endif
+    @if ($errors->any() && ! $errors->has('payment'))<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
     @if (! $cashSessionOpen)<p class="muted">Para baixar uma parcela em dinheiro, <a href="{{ route('cash.index') }}">abra o caixa</a>. Outras formas de pagamento não dependem do caixa aberto.</p>@endif
     <form method="get" action="{{ route('payables.index') }}" style="display:flex;gap:10px;flex-wrap:wrap;margin:18px 0"><select name="status" style="height:42px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"><option value="">Todas as parcelas</option><option value="open" @selected(($filters['status'] ?? '') === 'open')>Em aberto</option><option value="overdue" @selected(($filters['status'] ?? '') === 'overdue')>Vencidas</option><option value="paid" @selected(($filters['status'] ?? '') === 'paid')>Pagas</option><option value="cancelled" @selected(($filters['status'] ?? '') === 'cancelled')>Canceladas</option></select><button class="btn" type="submit">Filtrar</button><a class="btn secondary" href="{{ route('payables.index') }}">Limpar</a></form>
-    @if ($payables->isEmpty())<div class="alert alert-warning">Nenhuma parcela encontrada.</div>@else
+    @if ($payables->isEmpty())<div class="alert alert-warming">Nenhuma parcela encontrada.</div>@else
         <div style="display:grid;gap:14px">
         @foreach ($payables as $payable)
             @php($remainingCents = $payable->remainingCents())

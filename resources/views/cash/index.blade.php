@@ -2,11 +2,11 @@
 @section('content')
 <section class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap"><div><p class="muted" style="margin-bottom:8px">FINANCEIRO</p><h1 class="title">Caixa</h1></div><div class="actions"><a class="btn secondary" href="{{ route('dashboard') }}">Painel</a>@if($role === 'Administrador')<a class="btn secondary" href="{{ route('payables.index') }}">Contas a pagar</a>@endif</div></div>
-    @if (session('cash_notice'))<div class="alert alert-warning" role="status">{{ session('cash_notice') }}</div>@endif
-    @if ($errors->any())<div class="alert" role="alert">{{ $errors->first() }}</div>@endif
+    @if (session('cash_notice'))<div class="alert alert-success" role="status">{{ session('cash_notice') }}</div>@endif
+    @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
 
     @if (! $openSession)
-        <div class="alert alert-warning">Não há caixa aberto para esta empresa.</div>
+        <div class="alert alert-warming">Não há caixa aberto para esta empresa.</div>
         <form method="post" action="{{ route('cash.open') }}" class="grid" style="max-width:620px">@csrf
             <div class="field"><label for="opening_amount">Saldo inicial em dinheiro (R$)</label><input id="opening_amount" name="opening_amount" type="number" min="0" max="42949672.95" step="0.01" required value="{{ old('opening_amount', '0.00') }}">@error('opening_amount')<div class="error">{{ $message }}</div>@enderror</div>
             <div><button class="btn" type="submit">Abrir caixa</button></div>
@@ -31,7 +31,7 @@
         </form>
 
         <h2>Movimentações deste caixa</h2>
-        @if ($openSession->movements->isEmpty())<div class="alert alert-warning">Nenhuma movimentação após a abertura.</div>@else
+        @if ($openSession->movements->isEmpty())<div class="alert alert-warming">Nenhuma movimentação após a abertura.</div>@else
         <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left"><thead><tr><th style="padding:10px;border-bottom:1px solid #dbe3ed">Data</th><th style="padding:10px;border-bottom:1px solid #dbe3ed">Tipo</th><th style="padding:10px;border-bottom:1px solid #dbe3ed">Descrição</th><th style="padding:10px;border-bottom:1px solid #dbe3ed">Valor</th><th style="padding:10px;border-bottom:1px solid #dbe3ed">Responsável e autorização</th></tr></thead><tbody>@foreach ($openSession->movements as $movement)@php($refund = $movement->source_type === 'sale_refund' ? $refundsById->get($movement->source_id) : null)@php($workOrderRefund = $movement->source_type === 'service_work_order_refund' ? $workOrderRefundsById->get($movement->source_id) : null)@php($refundRecord = $refund ?? $workOrderRefund)<tr><td style="padding:10px;border-bottom:1px solid #edf1f5">{{ $movement->created_at->format('d/m/Y H:i') }}</td><td style="padding:10px;border-bottom:1px solid #edf1f5">{{ ['cash_in'=>'Entrada','sale_payment'=>'Recebimento de venda','receivable_payment'=>'Recebimento de conta','supply'=>'Suprimento','cash_out'=>'Saída','withdrawal'=>'Sangria','payable_payment'=>'Pagamento de conta','service_work_order_refund' => 'Devolução de OS', 'sale_refund' => 'Devolução de venda'][$movement->movement_type] ?? $movement->movement_type }}</td><td style="padding:10px;border-bottom:1px solid #edf1f5">{{ $movement->description }}@if($refundRecord)<br><span class="muted" style="margin:0">Motivo: {{ $refundRecord->reason }}</span>@endif</td><td style="padding:10px;border-bottom:1px solid #edf1f5;color:{{ $movement->direction === 'in' ? '#087443' : '#b42318' }}">{{ $movement->direction === 'in' ? '+' : '-' }} R$ {{ number_format($movement->amount_cents / 100, 2, ',', '.') }}</td><td style="padding:10px;border-bottom:1px solid #edf1f5">@if($refundRecord)Solicitado por {{ $refundRecord->creator?->name ?? 'Sistema' }}<br>Autorizado por {{ $refundRecord->approver?->name ?? '—' }}@else{{ $movement->creator?->name ?? 'Sistema' }}@endif</td></tr>@endforeach</tbody></table></div>
         @endif
 
