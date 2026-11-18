@@ -159,7 +159,7 @@
 
         <?php if ($order->notes) { ?><div style="margin-top:18px"><strong>Observações</strong><p style="white-space:pre-line">{{ $order->notes }}</p></div><?php } ?>
         <?php if ($order->warranty_days > 0 && $order->finalized_at) { ?><p><strong>Garantia:</strong> até {{ $order->finalized_at->copy()->addDays($order->warranty_days)->format('d/m/Y') }} ({{ $order->warranty_days }} dias)</p><?php } ?>
-        <?php if ($order->stock_applied_at) { ?><p class="muted">Peças baixadas do estoque em {{ $order->stock_applied_at->format('d/m/Y H:i') }}.<?php if ($order->stock_reversed_at) { ?> Estorno em {{ $order->stock_reversed_at->format('d/m/Y H:i') ?><?php } ?></p><?php } ?>
+        <?php if ($order->stock_applied_at) { ?><p class="muted">Peças baixadas do estoque em {{ $order->stock_applied_at->format('d/m/Y H:i') }}.<?php if ($order->stock_reversed_at) { ?> Estorno em {{ $order->stock_reversed_at->format('d/m/Y H:i') }}<?php } ?></p><?php } ?>
     </div>
 
     <?php if ($order->status !== 'cancelled' && $order->status !== 'finalized' && ($nextStatuses || $canRequestCancellation)) { ?>
