@@ -69,10 +69,13 @@ final class PurchaseController extends Controller
             'request_key' => ['required', 'uuid'],
             'supplier_id' => ['required', 'integer', Rule::exists('suppliers', 'id')->where(fn ($query) => $query->where('company_id', $companyId)->where('status', 'active'))],
             'invoice_number' => ['nullable', 'string', 'max:64'],
+            'payment_method' => ['required', Rule::in(['cash', 'pix', 'credit_card', 'debit_card', 'bank_transfer', 'boleto', 'supplier_terms', 'other'])],
             'purchased_at' => ['required', 'date', 'before_or_equal:today'],
             'due_dates' => ['required', 'array', 'size:'.$request->input('installment_count')],
             'due_dates.*' => ['required', 'date_format:Y-m-d', 'after_or_equal:purchased_at'],
             'installment_count' => ['required', 'integer', 'min:1', 'max:36'],
+            'installment_amounts' => ['required', 'array', 'size:'.$request->input('installment_count')],
+            'installment_amounts.*' => ['required', 'numeric', 'gt:0', 'max:42949672.95', 'regex:/^\\d+(?:[.,]\\d{1,2})?$/'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'items' => ['required', 'array', 'min:1', 'max:50'],
             'items.*.product_id' => ['required', 'integer', 'distinct', Rule::exists('products', 'id')->where(fn ($query) => $query->where('company_id', $companyId)->where('status', 'active'))],
@@ -93,12 +96,16 @@ final class PurchaseController extends Controller
             $lines[] = ['product_id' => (int) $item['product_id'], 'quantity' => $quantity, 'unit_cost_cents' => $unitCostCents, 'total_cents' => $lineCents];
         }
         $installments = (int) $data['installment_count'];
+        $installmentAmountsCents = array_map(fn ($amount): int => $this->toCents($amount), $data['installment_amounts']);
+        if (array_sum($installmentAmountsCents) !== $totalCents) {
+            throw ValidationException::withMessages(['installment_amounts' => 'A soma das parcelas precisa ser exatamente igual ao total da compra.']);
+        }
         if ($installments > $totalCents) {
             throw ValidationException::withMessages(['installment_count' => 'A quantidade de parcelas não pode gerar parcelas sem valor.']);
         }
 
         try {
-            $purchase = DB::transaction(function () use ($data, $lines, $totalCents, $installments, $companyId, $stock, $request): Purchase {
+            $purchase = DB::transaction(function () use ($data, $lines, $totalCents, $installments, $installmentAmountsCents, $companyId, $stock, $request): Purchase {
                 $supplier = Supplier::query()->whereKey($data['supplier_id'])->where('status', 'active')->lockForUpdate()->first();
                 if (! $supplier) {
                     throw ValidationException::withMessages(['supplier_id' => 'O fornecedor foi desativado. Atualize a página e selecione outro fornecedor.']);
@@ -116,6 +123,7 @@ final class PurchaseController extends Controller
                     'purchased_at' => $data['purchased_at'],
                     'total_cents' => $totalCents,
                     'installment_count' => $installments,
+                    'payment_method' => $data['payment_method'],
                     'status' => 'completed',
                     'request_key' => $data['request_key'],
                     'notes' => $data['notes'] ?? null,
@@ -133,10 +141,8 @@ final class PurchaseController extends Controller
                     $stock->record($product, 'entry', $line['quantity'], 'Entrada pela compra #'.$purchase->id, $request->user()->id);
                 }
 
-                $baseCents = intdiv($totalCents, $installments);
-                $remainderCents = $totalCents % $installments;
                 for ($number = 1; $number <= $installments; $number++) {
-                    $amountCents = $baseCents + ($number <= $remainderCents ? 1 : 0);
+                    $amountCents = $installmentAmountsCents[$number - 1];
                     AccountPayable::create([
                         'company_id' => $companyId,
                         'purchase_id' => $purchase->id,
