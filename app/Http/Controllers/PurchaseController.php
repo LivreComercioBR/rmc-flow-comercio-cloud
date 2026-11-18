@@ -75,7 +75,7 @@ final class PurchaseController extends Controller
             'due_dates.*' => ['required', 'date_format:Y-m-d', 'after_or_equal:purchased_at'],
             'installment_count' => ['required', 'integer', 'min:1', 'max:36'],
             'installment_amounts' => ['required', 'array', 'size:'.$request->input('installment_count')],
-            'installment_amounts.*' => ['required', 'numeric', 'gt:0', 'max:42949672.95', 'regex:/^\\d+(?:[.,]\\d{1,2})?$/'],
+            'installment_amounts.*' => ['required', 'numeric', 'gt:0', 'max:42949672.95', 'regex:/^\d+(?:[.,]\d{1,2})?$/'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'items' => ['required', 'array', 'min:1', 'max:50'],
             'items.*.product_id' => ['required', 'integer', 'distinct', Rule::exists('products', 'id')->where(fn ($query) => $query->where('company_id', $companyId)->where('status', 'active'))],
