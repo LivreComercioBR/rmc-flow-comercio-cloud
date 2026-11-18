@@ -117,7 +117,12 @@
 if (window.opener && !window.opener.closed) {
     window.opener.postMessage({
         type: 'rmc-product-created-for-purchase',
-        product: @json(['id' => $newlyCreatedProduct->id, 'name' => $newlyCreatedProduct->name, 'unit' => $newlyCreatedProduct->unit, 'stock_quantity' => $newlyCreatedProduct->stock_quantity]),
+        product: {
+            id: @json($newlyCreatedProduct->id),
+            name: @json($newlyCreatedProduct->name),
+            unit: @json($newlyCreatedProduct->unit),
+            stock_quantity: @json($newlyCreatedProduct->stock_quantity),
+        },
     }, window.location.origin);
     window.setTimeout(() => window.close(), 400);
 }
