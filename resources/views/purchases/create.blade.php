@@ -17,7 +17,7 @@
         <div id="purchase-items" style="display:grid;gap:10px">
             @foreach (old('items', [['product_id'=>'','quantity'=>'1.000','unit_cost'=>'0.00']]) as $index => $item)
                 <div class="purchase-item" style="display:grid;grid-template-columns:minmax(220px,2fr) minmax(110px,1fr) minmax(130px,1fr) auto;gap:10px;align-items:end;border:1px solid #e1e8f0;border-radius:10px;padding:12px">
-                    <div class="field" style="margin:0"><label>Produto *</label><select name="items[{{ $index }}][product_id]" required style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"><option value="">Selecione</option>@foreach ($products as $product)<option value="{{ $product->id }}" @selected((string)($item['product_id'] ?? '') === (string)$product->id)>{{ $product->name }} (saldo {{ $product->stock_quantity }} {{ $product->unit }})</option>@endforeach</select></div>
+                    <div class="field product-picker" style="margin:0"><label>Buscar produto por nome, SKU ou código de barras</label><input type="search" class="product-search" placeholder="Digite nome, SKU ou código" autocomplete="off" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"><label>Produto *</label><select name="items[{{ $index }}][product_id]" required style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"><option value="">Selecione</option>@foreach ($products as $product)<option value="{{ $product->id }}" data-search="{{ $product->name }} {{ $product->sku }} {{ $product->barcode }}" @selected((string)($item['product_id'] ?? '') === (string)$product->id)>{{ $product->name }} (saldo {{ $product->stock_quantity }} {{ $product->unit }})</option>@endforeach</select></div>
                     <div class="field" style="margin:0"><label>Quantidade *</label><input name="items[{{ $index }}][quantity]" type="number" min="0.001" max="999999999.999" step="0.001" required value="{{ $item['quantity'] ?? '1.000' }}" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"></div>
                     <div class="field" style="margin:0"><label>Custo unitário (R$) *</label><input name="items[{{ $index }}][unit_cost]" type="number" min="0" max="42949672.95" step="0.01" required value="{{ $item['unit_cost'] ?? '0.00' }}" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"></div>
                     <button class="btn secondary remove-item" type="button" aria-label="Remover item">Remover</button>
@@ -42,13 +42,32 @@
         <div class="field"><label for="notes">Observações</label><textarea id="notes" name="notes" rows="3" maxlength="5000" style="width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:10px;font:inherit">{{ old('notes') }}</textarea>@error('notes')<div class="error">{{ $message }}</div>@enderror</div>
         <div class="actions"><button class="btn" type="submit" @disabled($suppliers->isEmpty() || $products->isEmpty())>Registrar compra</button><a class="btn secondary" href="{{ route('purchases.index') }}">Voltar</a></div>
     </form>
-    <template id="item-template"><div class="purchase-item" style="display:grid;grid-template-columns:minmax(220px,2fr) minmax(110px,1fr) minmax(130px,1fr) auto;gap:10px;align-items:end;border:1px solid #e1e8f0;border-radius:10px;padding:12px"><div class="field" style="margin:0"><label>Produto *</label><select name="items[__INDEX__][product_id]" required style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"><option value="">Selecione</option>@foreach ($products as $product)<option value="{{ $product->id }}">{{ $product->name }} (saldo {{ $product->stock_quantity }} {{ $product->unit }})</option>@endforeach</select></div><div class="field" style="margin:0"><label>Quantidade *</label><input name="items[__INDEX__][quantity]" type="number" min="0.001" max="999999999.999" step="0.001" required value="1.000" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"></div><div class="field" style="margin:0"><label>Custo unitário (R$) *</label><input name="items[__INDEX__][unit_cost]" type="number" min="0" max="42949672.95" step="0.01" required value="0.00" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"></div><button class="btn secondary remove-item" type="button">Remover</button></div></template>
+    <template id="item-template"><div class="purchase-item" style="display:grid;grid-template-columns:minmax(220px,2fr) minmax(110px,1fr) minmax(130px,1fr) auto;gap:10px;align-items:end;border:1px solid #e1e8f0;border-radius:10px;padding:12px"><div class="field product-picker" style="margin:0"><label>Buscar produto por nome, SKU ou código de barras</label><input type="search" class="product-search" placeholder="Digite nome, SKU ou código" autocomplete="off" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"><label>Produto *</label><select name="items[__INDEX__][product_id]" required style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"><option value="">Selecione</option>@foreach ($products as $product)<option value="{{ $product->id }}" data-search="{{ $product->name }} {{ $product->sku }} {{ $product->barcode }}">{{ $product->name }} (saldo {{ $product->stock_quantity }} {{ $product->unit }})</option>@endforeach</select></div><div class="field" style="margin:0"><label>Quantidade *</label><input name="items[__INDEX__][quantity]" type="number" min="0.001" max="999999999.999" step="0.001" required value="1.000" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"></div><div class="field" style="margin:0"><label>Custo unitário (R$) *</label><input name="items[__INDEX__][unit_cost]" type="number" min="0" max="42949672.95" step="0.01" required value="0.00" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font:inherit"></div><button class="btn secondary remove-item" type="button">Remover</button></div></template>
 </section>
 <script>
 (() => {
   const list = document.getElementById('purchase-items');
   const template = document.getElementById('item-template');
   let nextIndex = {{ count(old('items', [['product_id' => '', 'quantity' => '1.000', 'unit_cost' => '0.00']])) }};
+  const filterProductOptions = (input) => {
+    const select = input.closest('.product-picker')?.querySelector('select');
+    if (!select) return;
+    const query = input.value.trim().toLocaleLowerCase('pt-BR');
+    [...select.options].forEach(option => {
+      if (!option.value) { option.hidden = false; return; }
+      const haystack = (option.dataset.search || option.textContent).toLocaleLowerCase('pt-BR');
+      option.hidden = Boolean(query) && !haystack.includes(query);
+    });
+  };
+  list.addEventListener('input', event => {
+    if (event.target.matches('.product-search')) filterProductOptions(event.target);
+  });
+  list.addEventListener('change', event => {
+    if (event.target.matches('select[name$="[product_id]"]')) {
+      const search = event.target.closest('.product-picker')?.querySelector('.product-search');
+      if (search) { search.value = ''; filterProductOptions(search); }
+    }
+  });
   document.getElementById('add-item').addEventListener('click', () => {
     const html = template.innerHTML.replaceAll('__INDEX__', String(nextIndex++));
     list.insertAdjacentHTML('beforeend', html);
