@@ -267,7 +267,7 @@ final class ServiceWorkOrderController extends Controller
             'name' => ['nullable', 'string', 'max:180'], 'description' => ['nullable', 'string', 'max:1000'],
             'quantity' => ['required', 'numeric', 'gt:0', 'max:999999999.999', 'regex:/^\\d+(?:[.,]\\d{1,3})?$/'],
             'unit_price' => ['required_if:type,service', 'nullable', 'numeric', 'min:0', 'max:42949672.95', 'regex:/^\\d+(?:[.,]\\d{1,2})?$/'],
-        ]);
+        ], ['unit_price.required_if' => 'Informe o valor unitário da mão de obra/serviço.']);
         if ($data['type'] === 'product' && empty($data['product_id'])) throw ValidationException::withMessages(['product_id' => 'Selecione a peça/produto.']);
         if ($data['type'] === 'service' && trim((string) ($data['name'] ?? '')) === '') throw ValidationException::withMessages(['name' => 'Informe o serviço ou mão de obra.']);
         DB::transaction(function () use ($company, $workOrder, $data, $request, $audit): void {
