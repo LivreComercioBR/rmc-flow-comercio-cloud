@@ -64,7 +64,7 @@
         </fieldset>
 
         <div class="grid">
-            <div class="field"><label for="initial_status">Status inicial *</label><select id="initial_status" name="initial_status" required><option value="open" @selected(old('initial_status', 'open') === 'open')>Aberta</option><option value="diagnosis" @selected(old('initial_status') === 'diagnosis')>Em diagnóstico</option><option value="in_progress" @selected(old('initial_status') === 'in_progress')>Em execução</option></select><small class="muted">Os demais status são aplicados conforme o andamento da OS.</small></div>
+            <div class="field"><label>Status inicial</label><div class="input-like" style="padding:12px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc">Aberta</div><small class="muted">O diagnóstico, orçamento e aprovação são registrados durante o atendimento.</small></div>
             <div class="field"><label for="expected_at">Previsão de entrega</label><input id="expected_at" name="expected_at" type="date" min="{{ now()->toDateString() }}" value="{{ old('expected_at') }}"></div>
             <div class="field"><label for="warranty_days">Garantia (dias)</label><input id="warranty_days" name="warranty_days" type="number" min="0" max="3650" value="{{ old('warranty_days', 0) }}"></div>
             <div class="field"><label for="mileage">Quilometragem (opcional)</label><input id="mileage" name="mileage" maxlength="80"></div>
