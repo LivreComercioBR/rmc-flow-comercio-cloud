@@ -42,7 +42,7 @@ final class SaleController extends Controller
             'discount' => ['nullable', 'numeric', 'min:0', 'max:99999999.99', 'regex:/^\d+(?:[.,]\d{1,2})?$/'],
             'items' => ['required', 'array', 'min:1', 'max:100'],
             'items.*.product_id' => ['required', 'integer', Rule::exists('products', 'id')->where('company_id', $companyId)],
-            'items.*.quantity' => ['required', 'numeric', 'gt:0', 'max:999999999.999', 'regex:/^\d+(?:[.,]\d{1,3})?$/'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:999999999'],
             'payments' => ['nullable', 'array', 'max:8'],
             'payments.*.method' => ['nullable', 'required_with:payments.*.amount', Rule::in(['cash', 'pix', 'debit_card', 'credit_card', 'bank_transfer', 'other'])],
             'payments.*.amount' => ['nullable', 'numeric', 'gt:0', 'max:99999999.99', 'regex:/^\d+(?:[.,]\d{1,2})?$/'],
