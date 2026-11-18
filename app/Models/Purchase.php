@@ -13,7 +13,7 @@ class Purchase extends Model
 
     protected $fillable = [
         'company_id', 'supplier_id', 'invoice_number', 'purchased_at', 'total_cents',
-        'installment_count', 'status', 'request_key', 'notes', 'created_by', 'cancelled_at',
+        'installment_count', 'payment_method', 'status', 'request_key', 'notes', 'created_by', 'cancelled_at',
         'cancelled_by', 'cancellation_reason',
     ];
 
