@@ -7,7 +7,25 @@
     <div style="max-width:950px;margin:22px auto">
         <div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-bottom:2px solid #102c4d;padding-bottom:16px"><div><h2 style="margin:0 0 8px">{{ $order->customer->name }}</h2>@if($order->customer->document)<div>{{ $order->customer->document }}</div>@endif@if($order->customer->phone)<div>{{ $order->customer->phone }}</div>@endif</div><div><strong>Situação:</strong> {{ $statuses[$order->status] ?? $order->status }}<br><strong>Aberta em:</strong> {{ $order->opened_at->format('d/m/Y H:i') }}@if($order->quote)<br><strong>Orçamento:</strong> #{{ str_pad((string)$order->quote->quote_number, 5, '0', STR_PAD_LEFT) }}@endif@if($order->finalized_at)<br><strong>Finalizada em:</strong> {{ $order->finalized_at->format('d/m/Y H:i') }}@endif</div></div>
         @if($order->asset_description || $order->asset_identifier || $order->asset_type)<div style="margin:18px 0"><strong>Veículo / equipamento</strong><div>{{ ['vehicle' => 'Veículo', 'motorcycle' => 'Motocicleta', 'equipment' => 'Equipamento', 'other' => 'Outro'][$order->asset_type] ?? $order->asset_type ?? 'Equipamento' }} · {{ $order->asset_description ?: '—' }} @if($order->asset_manufacturer || $order->asset_model)· {{ collect([$order->asset_manufacturer, $order->asset_model])->filter()->implode(' ') }}@endif@if($order->asset_year) · {{ $order->asset_year }}@endif@if($order->asset_color) · {{ $order->asset_color }}@endif @if($order->asset_identifier)· Identificação: {{ $order->asset_identifier }}@endif</div>@if($order->service_asset_id)<a class="no-print" href="{{ route('services.assets.show', $order->service_asset_id) }}">Ver histórico deste veículo/equipamento</a>@endif</div>@endif
-        @if($order->expected_at || $order->mileage || $order->fuel_level || $order->warranty_days)<div style="margin:18px 0"><strong>Dados de entrada</strong><div>@if($order->expected_at)Previsão de entrega: {{ $order->expected_at->format('d/m/Y') }}@endif @if($order->mileage) · Quilometragem: {{ $order->mileage }}@endif @if($order->fuel_level) · Combustível: {{ $order->fuel_level }}@endif @if($order->warranty_days) · Garantia: {{ $order->warranty_days }} dias@endif</div></div>@endif
+        @if ($order->expected_at || $order->mileage || $order->fuel_level || $order->warranty_days)
+            <div style="margin:18px 0">
+                <strong>Dados de entrada</strong>
+                <div>
+                    @if ($order->expected_at)
+                        Previsão de entrega: {{ $order->expected_at->format('d/m/Y') }}
+                    @endif
+                    @if ($order->mileage)
+                        · Quilometragem: {{ $order->mileage }}
+                    @endif
+                    @if ($order->fuel_level)
+                        · Combustível: {{ $order->fuel_level }}
+                    @endif
+                    @if ($order->warranty_days)
+                        · Garantia: {{ $order->warranty_days }} dias
+                    @endif
+                </div>
+            </div>
+        @endif
         @if($order->complaint)<div style="margin:18px 0"><strong>Relato do cliente</strong><p style="white-space:pre-line">{{ $order->complaint }}</p></div>@endif
         @if($order->diagnosis)<div style="margin:18px 0"><strong>Diagnóstico</strong><p style="white-space:pre-line">{{ $order->diagnosis }}</p></div>@endif
         <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left"><thead><tr><th style="padding:10px;border-bottom:1px solid #9aa9bb">Item</th><th style="padding:10px;border-bottom:1px solid #9aa9bb">Qtd.</th><th style="padding:10px;border-bottom:1px solid #9aa9bb">Preço unitário</th><th style="padding:10px;border-bottom:1px solid #9aa9bb">Total</th></tr></thead><tbody>@foreach($order->items as $item)<tr><td style="padding:10px;border-bottom:1px solid #dbe3ed"><strong>{{ $item->name }}</strong>@if($item->description)<br>{{ $item->description }}@endif</td><td style="padding:10px;border-bottom:1px solid #dbe3ed">{{ number_format((float)$item->quantity, 3, ',', '.') }}</td><td style="padding:10px;border-bottom:1px solid #dbe3ed">R$ {{ number_format($item->unit_price_cents / 100, 2, ',', '.') }}</td><td style="padding:10px;border-bottom:1px solid #dbe3ed">R$ {{ number_format($item->total_cents / 100, 2, ',', '.') }}</td></tr>@endforeach</tbody><tfoot><tr><th colspan="3" style="padding:12px;text-align:right">TOTAL</th><th style="padding:12px">R$ {{ number_format($order->totalCents() / 100, 2, ',', '.') }}</th></tr></tfoot></table></div>
