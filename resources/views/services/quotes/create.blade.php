@@ -75,10 +75,9 @@
         const sourceWrap = row.querySelector('[data-source-wrap]');
         const source = row.querySelector('[data-source-id]');
         const search = row.querySelector('[data-source-search]');
-        const sourceValue = row.querySelector('[data-source-value]');
         const results = row.querySelector('[data-source-results]');
         sourceWrap.hidden = manual;
-        source.required = !manual;
+        source.required = false;
         row.querySelectorAll('[data-manual-wrap]').forEach((field) => { field.hidden = !manual; });
         row.querySelector('[data-manual-wrap] input[name$="[name]"]').required = manual;
         row.querySelector('[data-manual-price-wrap]').hidden = !manual;
@@ -95,6 +94,7 @@
         const type = row.querySelector('[data-item-type]');
         const source = row.querySelector('[data-source-id]');
         const search = row.querySelector('[data-source-search]');
+        const sourceValue = row.querySelector('[data-source-value]');
         const results = row.querySelector('[data-source-results]');
         if (source.selectedOptions[0]?.value) { if (search) search.value = source.selectedOptions[0].textContent.trim(); row.querySelector('[data-source-value]').value = source.selectedOptions[0].value; }
         const renderResults = () => {
@@ -109,6 +109,7 @@
                 const chooseOption = (event) => {
                     event.preventDefault();
                     source.selectedIndex = [...source.options].indexOf(option);
+                    sourceValue.value = option.value;
                     search.value = option.textContent.trim();
                     results.style.display = 'none';
                     recalculate();
