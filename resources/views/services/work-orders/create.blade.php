@@ -31,13 +31,14 @@
             <div class="field">
                 <label for="service_asset_id">Veículo / equipamento cadastrado</label>
                 <select id="service_asset_id" name="service_asset_id">
-                    <option value="">Cadastrar / informar outro item</option>
+                    <option value="">Selecione um veículo/equipamento cadastrado</option>
                     @foreach ($assets as $asset)
                         <option value="{{ $asset->id }}" data-customer="{{ $asset->customer_id }}" @selected((string) old('service_asset_id') === (string) $asset->id)>
                             {{ $asset->name }} · {{ $asset->identifier ?: 'sem identificação' }} · {{ $asset->customer?->name }}
                         </option>
                     @endforeach
                 </select>
+                <button class="btn secondary" type="button" id="add-asset-fields" style="margin-top:8px">Cadastrar / informar outro bem</button>
                 <small class="muted">A lista será filtrada pelo cliente selecionado.</small>
             </div>
         </div>
@@ -110,12 +111,7 @@
         if (customer.selectedOptions[0]?.hidden) customer.value = '';
     });
     const asset = document.getElementById('service_asset_id');
-    const addAssetButton = document.createElement('button');
-    addAssetButton.type = 'button';
-    addAssetButton.className = 'btn secondary';
-    addAssetButton.textContent = 'Cadastrar / informar outro bem';
-    asset.insertAdjacentElement('afterend', addAssetButton);
-    addAssetButton.addEventListener('click', () => {
+    document.getElementById('add-asset-fields')?.addEventListener('click', () => {
         asset.value = '';
         assetFields.hidden = false;
         description.required = true;
