@@ -53,7 +53,9 @@ final class PayableController extends Controller
             'supplier_id' => ['nullable', 'integer', Rule::exists('suppliers', 'id')->where('company_id', $companyId)],
             'financial_category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->where('company_id', $companyId)->where('kind', 'expense')],
             'amount' => ['required', 'numeric', 'gt:0', 'max:42949672.95', 'regex:/^\d+(?:[.,]\d{1,2})?$/'],
-            'installments' => ['required', 'integer', 'min:1', 'max:24'], 'first_due_date' => ['required', 'date'],
+            'installments' => ['required', 'integer', 'min:1', 'max:24'],
+            'due_dates' => ['required', 'array', 'size:'.$request->input('installments')],
+            'due_dates.*' => ['required', 'date_format:Y-m-d'],
         ]);
         $existing = AccountPayable::query()->where('manual_request_key', 'like', $data['request_key'].':%')->first();
         if (! $existing) {
@@ -63,11 +65,10 @@ final class PayableController extends Controller
             DB::transaction(function () use ($data, $companyId, $request, $count, $base, $remainder): void {
                 \App\Models\Company::query()->whereKey($companyId)->lockForUpdate()->firstOrFail();
                 if (AccountPayable::query()->where('manual_request_key', 'like', $data['request_key'].':%')->exists()) return;
-                $firstDue = Carbon::parse($data['first_due_date'])->startOfDay();
                 for ($i = 1; $i <= $count; $i++) AccountPayable::create([
                     'company_id' => $companyId, 'purchase_id' => null, 'supplier_id' => $data['supplier_id'] ?? null,
                     'financial_category_id' => $data['financial_category_id'] ?? null, 'manual_request_key' => $data['request_key'].':'.$i,
-                    'description' => $data['description'], 'installment_number' => $i, 'due_date' => $firstDue->copy()->addMonthsNoOverflow($i - 1)->toDateString(),
+                    'description' => $data['description'], 'installment_number' => $i, 'due_date' => $data['due_dates'][$i - 1],
                     'amount_cents' => $base + ($i <= $remainder ? 1 : 0), 'paid_cents' => 0, 'cancelled_balance_cents' => 0,
                     'status' => 'pending', 'created_by' => $request->user()->id,
                 ]);
