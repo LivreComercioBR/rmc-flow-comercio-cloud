@@ -76,16 +76,66 @@
             <div class="no-print" style="margin:18px 0;padding:16px;border:1px solid #cbd5e1;border-radius:8px">
                 <h2>Peças e mão de obra do orçamento</h2>
                 <p class="muted">Adicione os itens necessários após o diagnóstico. O estoque só será baixado quando o serviço for concluído.</p>
-                <form method="post" action="{{ route('services.work-orders.items.add', $order->id) }}" class="grid" style="max-width:950px">
+                <form method="post" action="{{ route('services.work-orders.items.add', $order->id) }}" class="grid" id="work-order-item-form" style="max-width:950px">
                     <?= csrf_field() ?>
                     <div class="field"><label for="item_type">Tipo de item</label><select id="item_type" name="type" required><option value="product">Peça / produto</option><option value="service">Serviço / mão de obra</option></select></div>
-                    <div class="field"><label for="item_product">Produto</label><select id="item_product" name="product_id"><option value="">Selecione</option><?php foreach ($products as $product) { ?><option value="{{ $product->id }}">{{ $product->name }} · R$ {{ number_format($product->sale_price_cents / 100, 2, ',', '.') }}</option><?php } ?></select></div>
-                    <div class="field"><label for="item_name">Serviço / mão de obra</label><input id="item_name" name="name" maxlength="180" placeholder="Ex.: troca de tela, mão de obra"></div>
+                    <div class="field" style="position:relative"><label for="item_search">Buscar peça ou serviço cadastrado</label><input id="item_search" type="search" autocomplete="off" placeholder="Digite nome, código de barras ou SKU"><div id="item_search_results" style="position:absolute;z-index:5;top:100%;left:0;right:0;background:#fff;border:1px solid #cbd5e1;border-radius:8px;max-height:230px;overflow:auto;display:none"></div><select id="item_catalog_options" hidden><option value="">Selecione</option><?php foreach ($products as $product) { ?><option data-kind="product" data-search="{{ mb_strtolower($product->name.' '.$product->sku.' '.$product->barcode) }}" data-price="{{ number_format($product->sale_price_cents / 100, 2, '.', '') }}" value="{{ $product->id }}">{{ $product->name }} · SKU {{ $product->sku }} · EAN {{ $product->barcode }} · R$ {{ number_format($product->sale_price_cents / 100, 2, ',', '.') }}</option><?php } ?><?php foreach ($serviceCatalog as $catalogService) { ?><option data-kind="service" data-search="{{ mb_strtolower($catalogService->name.' '.$catalogService->description) }}" data-price="{{ number_format($catalogService->price_cents / 100, 2, '.', '') }}" value="{{ $catalogService->id }}">{{ $catalogService->name }} · R$ {{ number_format($catalogService->price_cents / 100, 2, ',', '.') }}</option><?php } ?></select><input type="hidden" id="item_product_id" name="product_id"><input type="hidden" id="item_service_id" name="service_catalog_id"></div>
+                    <div class="field" id="item_name_wrap" hidden><label for="item_name">Serviço / mão de obra</label><input id="item_name" name="name" maxlength="180" placeholder="Selecione um serviço cadastrado ou informe outro"></div>
                     <div class="field"><label for="item_quantity">Quantidade</label><input id="item_quantity" name="quantity" type="number" min="0.001" step="0.001" value="1" required></div>
-                    <div class="field"><label for="item_price">Valor unitário (R$) — serviço</label><input id="item_price" name="unit_price" type="number" min="0" step="0.01"></div>
+                    <div class="field"><label for="item_price">Valor unitário (R$)</label><input id="item_price" name="unit_price" type="number" min="0" step="0.01" required></div>
                     <div class="field" style="grid-column:1/-1"><label for="item_description">Detalhes (opcional)</label><input id="item_description" name="description" maxlength="1000"></div>
+                    <div class="field" style="grid-column:1/-1"><strong>Subtotal do item: <span id="item_subtotal">R$ 0,00</span></strong></div>
                     <div class="actions"><button class="btn" type="submit">Adicionar ao orçamento</button></div>
                 </form>
+                <script>
+                (() => {
+                    const type = document.getElementById('item_type');
+                    const search = document.getElementById('item_search');
+                    const results = document.getElementById('item_search_results');
+                    const catalog = document.getElementById('item_catalog_options');
+                    const productId = document.getElementById('item_product_id');
+                    const serviceId = document.getElementById('item_service_id');
+                    const name = document.getElementById('item_name');
+                    const nameWrap = document.getElementById('item_name_wrap');
+                    const price = document.getElementById('item_price');
+                    const quantity = document.getElementById('item_quantity');
+                    const subtotal = document.getElementById('item_subtotal');
+                    const money = (n) => new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(n || 0);
+                    const refreshTotal = () => { subtotal.textContent = money((parseFloat(quantity.value || 0) || 0) * (parseFloat(price.value || 0) || 0)); };
+                    const renderResults = () => {
+                        results.replaceChildren();
+                        const q = search.value.trim().toLocaleLowerCase('pt-BR');
+                        const options = [...catalog.options].filter(o => o.dataset.kind === type.value && (!q || (o.dataset.search || '').includes(q))).slice(0, 30);
+                        options.forEach(option => {
+                            const button = document.createElement('button');
+                            button.type = 'button'; button.textContent = option.textContent; button.style.cssText = 'display:block;width:100%;text-align:left;padding:9px 12px;border:0;background:white;cursor:pointer';
+                            button.addEventListener('click', () => {
+                                productId.value = type.value === 'product' ? option.value : '';
+                                serviceId.value = type.value === 'service' ? option.value : '';
+                                search.value = option.textContent.trim();
+                                price.value = option.dataset.price || '0.00';
+                                if (type.value === 'service') name.value = option.textContent.split(' · R$')[0].trim();
+                                results.style.display = 'none'; refreshTotal();
+                            });
+                            results.appendChild(button);
+                        });
+                        results.style.display = options.length ? 'block' : 'none';
+                    };
+                    type.addEventListener('change', () => {
+                        productId.value = ''; serviceId.value = ''; search.value = ''; name.value = ''; price.value = '';
+                        nameWrap.hidden = type.value !== 'service';
+                        price.readOnly = type.value === 'product';
+                        search.placeholder = type.value === 'product' ? 'Digite nome, código de barras ou SKU' : 'Busque um serviço cadastrado ou deixe em branco para informar outro';
+                        refreshTotal(); renderResults();
+                    });
+                    search.addEventListener('input', renderResults);
+                    search.addEventListener('focus', renderResults);
+                    document.addEventListener('click', (event) => { if (!results.contains(event.target) && event.target !== search) results.style.display = 'none'; });
+                    name.addEventListener('input', () => { serviceId.value = ''; });
+                    price.addEventListener('input', refreshTotal); quantity.addEventListener('input', refreshTotal);
+                    type.dispatchEvent(new Event('change'));
+                })();
+                </script>
             </div>
         <?php } ?>
         <div style="overflow-x:auto">
