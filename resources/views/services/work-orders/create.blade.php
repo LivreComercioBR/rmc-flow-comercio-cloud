@@ -17,13 +17,16 @@
         @csrf
         <div class="grid">
             <div class="field">
-                <label for="customer_id">Cliente *</label>
+                <label for="customer_search">Buscar cliente</label>
+                <input id="customer_search" type="search" placeholder="Digite nome, documento ou telefone" autocomplete="off">
+                <label for="customer_id" style="margin-top:8px">Cliente *</label>
                 <select id="customer_id" name="customer_id" required>
                     <option value="">Selecione o cliente</option>
                     @foreach ($customers as $customer)
-                        <option value="{{ $customer->id }}" @selected((string) old('customer_id') === (string) $customer->id)>{{ $customer->name }}</option>
+                        <option value="{{ $customer->id }}" data-search="{{ mb_strtolower($customer->name.' '.$customer->document.' '.$customer->phone) }}" @selected((string) old('customer_id') === (string) $customer->id)>{{ $customer->name }}</option>
                     @endforeach
                 </select>
+                <div class="actions" style="margin-top:8px"><a class="btn secondary" href="{{ route('customers.index') }}" target="_blank" rel="noopener">Pesquisar clientes</a><a class="btn secondary" href="{{ route('customers.create') }}" target="_blank" rel="noopener">Novo cliente</a></div>
             </div>
             <div class="field">
                 <label for="service_asset_id">Veículo / equipamento cadastrado</label>
@@ -59,16 +62,16 @@
         </fieldset>
 
         <div class="grid">
-            <div class="field"><label for="status_display">Status inicial</label><input id="status_display" value="Aberta" readonly></div>
+            <div class="field"><label for="initial_status">Status inicial *</label><select id="initial_status" name="initial_status" required><option value="open" @selected(old('initial_status', 'open') === 'open')>Aberta</option><option value="diagnosis" @selected(old('initial_status') === 'diagnosis')>Em diagnóstico</option><option value="in_progress" @selected(old('initial_status') === 'in_progress')>Em execução</option></select><small class="muted">Os demais status são aplicados conforme o andamento da OS.</small></div>
             <div class="field"><label for="expected_at">Previsão de entrega</label><input id="expected_at" name="expected_at" type="date" min="{{ now()->toDateString() }}" value="{{ old('expected_at') }}"></div>
             <div class="field"><label for="warranty_days">Garantia (dias)</label><input id="warranty_days" name="warranty_days" type="number" min="0" max="3650" value="{{ old('warranty_days', 0) }}"></div>
             <div class="field"><label for="mileage">Quilometragem (opcional)</label><input id="mileage" name="mileage" maxlength="80"></div>
             <div class="field"><label for="fuel_level">Combustível (opcional)</label><input id="fuel_level" name="fuel_level" maxlength="80"></div>
         </div>
 
-        <div class="field" style="margin-top:16px"><label for="complaint">Problema relatado *</label><textarea id="complaint" name="complaint" maxlength="4000" rows="4" required>{{ old('complaint') }}</textarea></div>
-        <div class="field"><label for="diagnosis">Diagnóstico</label><textarea id="diagnosis" name="diagnosis" maxlength="4000" rows="3">{{ old('diagnosis') }}</textarea></div>
-        <div class="field"><label for="notes">Observações</label><textarea id="notes" name="notes" maxlength="4000" rows="3">{{ old('notes') }}</textarea></div>
+        <div class="field" style="margin-top:16px"><label for="complaint">Problema relatado *</label><textarea id="complaint" name="complaint" maxlength="4000" rows="7" style="width:100%;min-height:160px;resize:vertical" required>{{ old('complaint') }}</textarea></div>
+        <div class="field"><label for="diagnosis">Diagnóstico</label><textarea id="diagnosis" name="diagnosis" maxlength="4000" rows="6" style="width:100%;min-height:140px;resize:vertical">{{ old('diagnosis') }}</textarea></div>
+        <div class="field"><label for="notes">Observações</label><textarea id="notes" name="notes" maxlength="4000" rows="6" style="width:100%;min-height:140px;resize:vertical">{{ old('notes') }}</textarea></div>
 
         <div class="actions" style="justify-content:space-between;margin-top:24px">
             <h2 style="margin:0">Serviços e peças</h2>
@@ -97,7 +100,27 @@
 <script>
 (() => {
     const customer = document.getElementById('customer_id');
+    const customerSearch = document.getElementById('customer_search');
+    customerSearch?.addEventListener('input', () => {
+        const term = customerSearch.value.trim().toLocaleLowerCase();
+        [...customer.options].forEach(option => {
+            if (!option.value) { option.hidden = false; return; }
+            option.hidden = term !== '' && !option.dataset.search.includes(term);
+        });
+        if (customer.selectedOptions[0]?.hidden) customer.value = '';
+    });
     const asset = document.getElementById('service_asset_id');
+    const addAssetButton = document.createElement('button');
+    addAssetButton.type = 'button';
+    addAssetButton.className = 'btn secondary';
+    addAssetButton.textContent = 'Cadastrar / informar outro bem';
+    asset.insertAdjacentElement('afterend', addAssetButton);
+    addAssetButton.addEventListener('click', () => {
+        asset.value = '';
+        assetFields.hidden = false;
+        description.required = true;
+        description.focus();
+    });
     const assetFields = document.getElementById('new-asset-fields');
     const description = document.getElementById('asset_description');
     const syncAssets = () => {
