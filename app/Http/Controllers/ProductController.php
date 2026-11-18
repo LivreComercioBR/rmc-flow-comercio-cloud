@@ -39,9 +39,12 @@ final class ProductController extends Controller
         return view('products.index', compact('products', 'categories', 'search', 'filters'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('products.create', ['categories' => $this->activeCategories()]);
+        return view('products.create', [
+            'categories' => $this->activeCategories(),
+            'purchasePopup' => $request->boolean('purchase_popup'),
+        ]);
     }
 
     public function store(Request $request, CompanyContext $context, StockMovementService $stock): RedirectResponse
