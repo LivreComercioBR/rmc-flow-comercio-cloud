@@ -11,7 +11,7 @@
             <div class="field"><label for="supplier_id">Fornecedor *</label><select id="supplier_id" name="supplier_id" required style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"><option value="">Selecione</option>@foreach ($suppliers as $supplier)<option value="{{ $supplier->id }}" @selected((string)old('supplier_id', $supplierId) === (string)$supplier->id)>{{ $supplier->name }}</option>@endforeach</select><a href="{{ route('suppliers.create', ['return_to' => 'purchases.create']) }}">Cadastrar fornecedor e voltar à compra</a>@error('supplier_id')<div class="error">{{ $message }}</div>@enderror</div>
             <div class="field"><label for="invoice_number">Número da nota / documento</label><input id="invoice_number" name="invoice_number" maxlength="64" value="{{ old('invoice_number') }}">@error('invoice_number')<div class="error">{{ $message }}</div>@enderror</div>
         </div>
-        <div class="grid"><div class="field"><label for="purchased_at">Data da compra *</label><input id="purchased_at" name="purchased_at" type="date" required value="{{ old('purchased_at', now()->toDateString()) }}">@error('purchased_at')<div class="error">{{ $message }}</div>@enderror</div><div class="field"><label for="first_due_date">Vencimento da primeira parcela *</label><input id="first_due_date" name="first_due_date" type="date" required value="{{ old('first_due_date', now()->toDateString()) }}">@error('first_due_date')<div class="error">{{ $message }}</div>@enderror</div><div class="field"><label for="installment_count">Número de parcelas *</label><input id="installment_count" name="installment_count" type="number" min="1" max="36" required value="{{ old('installment_count', 1) }}">@error('installment_count')<div class="error">{{ $message }}</div>@enderror</div></div>
+        <div class="grid"><div class="field"><label for="purchased_at">Data da compra *</label><input id="purchased_at" name="purchased_at" type="date" required value="{{ old('purchased_at', now()->toDateString()) }}">@error('purchased_at')<div class="error">{{ $message }}</div>@enderror</div><div class="field" style="grid-column:1/-1"><span class="label">Vencimentos das parcelas *</span><p class="muted" style="margin:0">Confira e ajuste cada vencimento conforme o prazo combinado. As datas são sugeridas mês a mês.</p><div id="purchase-due-dates" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"></div>@error('due_dates')<div class="error">{{ $message }}</div>@enderror</div><div class="field"><label for="installment_count">Número de parcelas *</label><input id="installment_count" name="installment_count" type="number" min="1" max="36" required value="{{ old('installment_count', 1) }}">@error('installment_count')<div class="error">{{ $message }}</div>@enderror</div></div>
         <h2>Itens</h2>
         @error('items')<div class="alert alert-danger">{{ $message }}</div>@enderror
         <div id="purchase-items" style="display:grid;gap:10px">
@@ -44,6 +44,49 @@
     const button = event.target.closest('.remove-item');
     if (button && list.querySelectorAll('.purchase-item').length > 1) button.closest('.purchase-item').remove();
   });
+  const installmentCount = document.getElementById('installment_count');
+  const dueDates = document.getElementById('purchase-due-dates');
+  const oldDueDates = @json(old('due_dates', []));
+  let firstDueDate = oldDueDates[0] || @json(old('first_due_date', now()->toDateString()));
+  const datePlusMonths = (value, months) => {
+    const [year, month, day] = value.split('-').map(Number);
+    const target = new Date(year, month - 1 + months, 1);
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(day, lastDay));
+    return [target.getFullYear(), String(target.getMonth() + 1).padStart(2, '0'), String(target.getDate()).padStart(2, '0')].join('-');
+  };
+  const renderDueDates = () => {
+    const inputs = [];
+    dueDates.replaceChildren();
+    for (let i = 0; i < Number(installmentCount.value); i++) {
+      const field = document.createElement('div');
+      field.className = 'field';
+      const label = document.createElement('label');
+      label.htmlFor = `purchase_due_date_${i}`;
+      label.textContent = `Parcela ${i + 1} — vencimento *`;
+      const input = document.createElement('input');
+      input.type = 'date';
+      input.id = label.htmlFor;
+      input.name = `due_dates[${i}]`;
+      input.required = true;
+      input.value = oldDueDates[i] || datePlusMonths(firstDueDate, i);
+      input.addEventListener('change', () => {
+        if (i === 0) {
+          firstDueDate = input.value;
+          inputs.forEach((other, index) => {
+            if (index > 0 && !other.dataset.edited) other.value = datePlusMonths(firstDueDate, index);
+          });
+        }
+        input.dataset.edited = 'true';
+      });
+      inputs.push(input);
+      field.append(label, input);
+      dueDates.append(field);
+    }
+  };
+  installmentCount.addEventListener('input', renderDueDates);
+  renderDueDates();
+
 })();
 </script>
 @endsection
