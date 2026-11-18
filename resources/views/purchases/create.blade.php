@@ -4,7 +4,7 @@
     <p class="muted" style="margin-bottom:8px">FORNECIMENTO E ESTOQUE</p><h1 class="title">Registrar compra</h1><p class="muted">A confirmação adicionará os itens ao estoque e criará as parcelas em contas a pagar.</p>
     @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
     @if ($suppliers->isEmpty())<div class="alert alert-warming">Cadastre um fornecedor antes de registrar uma compra. <a href="{{ route('suppliers.create') }}">Cadastrar fornecedor</a></div>@endif
-    @if ($products->isEmpty())<div class="alert alert-warming">Cadastre ao menos um produto ou peça antes de registrar uma compra. <a href="{{ route('products.create') }}">Cadastrar produto</a></div>@endif
+    @if ($products->isEmpty())<div class="alert alert-warming">Cadastre ao menos um produto ou peça antes de registrar uma compra. <a href="{{ route('products.create', ['purchase_popup' => 1]) }}" target="_blank" rel="opener">Cadastrar produto</a></div>@endif
     <form method="post" action="{{ route('purchases.store') }}" id="purchase-form">@csrf
         <input type="hidden" name="request_key" value="{{ old('request_key', $requestKey) }}">
         <div class="grid">
@@ -12,7 +12,7 @@
             <div class="field"><label for="invoice_number">Número da nota / documento</label><input id="invoice_number" name="invoice_number" maxlength="64" value="{{ old('invoice_number') }}">@error('invoice_number')<div class="error">{{ $message }}</div>@enderror</div>
         </div>
         <div class="grid"><div class="field"><label for="purchased_at">Data da compra *</label><input id="purchased_at" name="purchased_at" type="date" required value="{{ old('purchased_at', now()->toDateString()) }}">@error('purchased_at')<div class="error">{{ $message }}</div>@enderror</div><div class="field" style="grid-column:1/-1"><span class="label">Vencimentos das parcelas *</span><p class="muted" style="margin:0">Confira e ajuste cada vencimento conforme o prazo combinado. As datas são sugeridas mês a mês.</p><div id="purchase-due-dates" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"></div>@error('due_dates')<div class="error">{{ $message }}</div>@enderror</div><div class="field"><label for="installment_count">Número de parcelas *</label><input id="installment_count" name="installment_count" type="number" min="1" max="36" required value="{{ old('installment_count', 1) }}">@error('installment_count')<div class="error">{{ $message }}</div>@enderror</div></div>
-        <h2>Itens</h2>
+        <div class="actions" style="justify-content:space-between;align-items:center;margin-top:24px"><h2 style="margin:0">Itens</h2><a class="btn secondary" href="{{ route('products.create', ['purchase_popup' => 1]) }}" target="_blank" rel="opener">Cadastrar produto / peça</a></div>
         @error('items')<div class="alert alert-danger">{{ $message }}</div>@enderror
         <div id="purchase-items" style="display:grid;gap:10px">
             @foreach (old('items', [['product_id'=>'','quantity'=>'1.000','unit_cost'=>'0.00']]) as $index => $item)
@@ -86,7 +86,41 @@
   };
   installmentCount.addEventListener('input', renderDueDates);
   renderDueDates();
+  window.addEventListener('message', (event) => {
+    if (event.origin !== window.location.origin || event.data?.type !== 'rmc-product-created-for-purchase') return;
+    const product = event.data.product;
+    if (!product?.id || !product?.name) return;
+    const optionLabel = `${product.name} (saldo ${product.stock_quantity} ${product.unit})`;
+    const selects = [...list.querySelectorAll('select[name$="[product_id]"]'), template.content.querySelector('select')];
+    selects.forEach((select) => {
+      if (![...select.options].some(option => option.value === String(product.id))) {
+        select.add(new Option(optionLabel, String(product.id)));
+      }
+    });
+    let target = [...list.querySelectorAll('select[name$="[product_id]"]')].find(select => !select.value);
+    if (!target) {
+      document.getElementById('add-item').click();
+      target = [...list.querySelectorAll('select[name$="[product_id]"]')].at(-1);
+    }
+    target.value = String(product.id);
+    target.dispatchEvent(new Event('change', { bubbles: true }));
+    if (document.getElementById('supplier_id').value) document.querySelector('#purchase-form button[type="submit"]').disabled = false;
+    target.focus();
+  });
+
 
 })();
 </script>
+
+@if(request()->boolean('purchase_popup') && $newlyCreatedProduct)
+<script>
+if (window.opener && !window.opener.closed) {
+    window.opener.postMessage({
+        type: 'rmc-product-created-for-purchase',
+        product: @json(['id' => $newlyCreatedProduct->id, 'name' => $newlyCreatedProduct->name, 'unit' => $newlyCreatedProduct->unit, 'stock_quantity' => $newlyCreatedProduct->stock_quantity]),
+    }, window.location.origin);
+    window.setTimeout(() => window.close(), 400);
+}
+</script>
+@endif
 @endsection
