@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\AccountPayable;
+use App\Models\AccountReceivable;
 use App\Support\CompanyContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,6 +42,21 @@ final class CategoryController extends Controller
         $record = $this->findForCompany($category, $context);
         $record->update(['status' => $record->status === 'active' ? 'inactive' : 'active']);
         return redirect()->route('categories.index')->with('catalog_notice', 'Status da categoria atualizado.');
+    }
+
+    public function destroy(int $category, CompanyContext $context): RedirectResponse
+    {
+        $record = $this->findForCompany($category, $context);
+        $isReferenced = $record->products()->exists()
+            || AccountPayable::query()->where('financial_category_id', $record->id)->exists()
+            || AccountReceivable::query()->where('financial_category_id', $record->id)->exists();
+
+        if ($isReferenced) {
+            return redirect()->route('categories.index')->with('catalog_error', 'Esta categoria j� est� vinculada a produtos ou lan�amentos financeiros. Desative-a para preservar o hist�rico.');
+        }
+
+        $record->delete();
+        return redirect()->route('categories.index')->with('catalog_notice', 'Categoria exclu�da.');
     }
 
     private function findForCompany(int $category, CompanyContext $context): Category

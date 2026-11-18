@@ -124,6 +124,7 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/categorias', [CategoryController::class, 'store'])->name('categories.store');
         Route::put('/categorias/{category}', [CategoryController::class, 'update'])->whereNumber('category')->name('categories.update');
         Route::patch('/categorias/{category}/status', [CategoryController::class, 'toggle'])->whereNumber('category')->name('categories.toggle');
+        Route::delete('/categorias/{category}', [CategoryController::class, 'destroy'])->whereNumber('category')->name('categories.destroy');
         Route::get('/produtos', [ProductController::class, 'index'])->name('products.index');
         Route::get('/produtos/novo', [ProductController::class, 'create'])->name('products.create');
         Route::post('/produtos', [ProductController::class, 'store'])->name('products.store');

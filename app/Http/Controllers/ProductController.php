@@ -50,9 +50,11 @@ final class ProductController extends Controller
         abort_unless($companyId, 403);
         $data = $this->validated($request, $companyId);
         $initialStock = (float) ($data['initial_stock'] ?? 0);
-        unset($data['initial_stock'], $data['cost_price'], $data['sale_price']);
+        unset($data['initial_stock'], $data['cost_price'], $data['sale_price'], $data['other_costs']);
         $data['cost_price_cents'] = $this->toCents($request->input('cost_price', '0'));
         $data['sale_price_cents'] = $this->toCents($request->input('sale_price', '0'));
+        $data['other_costs_cents'] = $this->toCents($request->input('other_costs', '0'));
+        $this->normalizePriceRates($data);
 
         try {
             $product = DB::transaction(function () use ($data, $companyId, $initialStock, $stock, $request): Product {
@@ -67,7 +69,7 @@ final class ProductController extends Controller
                 return $product;
             });
         } catch (QueryException $exception) {
-            return back()->withInput()->withErrors(['sku' => 'SKU ou código de barras já está cadastrado nesta empresa.']);
+            return back()->withInput()->withErrors(['sku' => 'SKU ou c�digo de barras j� est� cadastrado nesta empresa.']);
         }
 
         return redirect()->route('products.index')->with('catalog_notice', 'Produto cadastrado.');
@@ -83,13 +85,15 @@ final class ProductController extends Controller
     {
         $record = $this->findForCompany($product, $context);
         $data = $this->validated($request, $context->id(), $record->id, false);
-        unset($data['cost_price'], $data['sale_price']);
+        unset($data['cost_price'], $data['sale_price'], $data['other_costs']);
         $data['cost_price_cents'] = $this->toCents($request->input('cost_price', '0'));
         $data['sale_price_cents'] = $this->toCents($request->input('sale_price', '0'));
+        $data['other_costs_cents'] = $this->toCents($request->input('other_costs', '0'));
+        $this->normalizePriceRates($data);
         try {
             $record->update($data);
         } catch (QueryException $exception) {
-            return back()->withInput()->withErrors(['sku' => 'SKU ou código de barras já está cadastrado nesta empresa.']);
+            return back()->withInput()->withErrors(['sku' => 'SKU ou c�digo de barras j� est� cadastrado nesta empresa.']);
         }
         return redirect()->route('products.index')->with('catalog_notice', 'Produto atualizado.');
     }
@@ -133,6 +137,14 @@ final class ProductController extends Controller
             'unit' => ['required', 'string', 'max:12'],
             'cost_price' => ['nullable', 'numeric', 'min:0', 'max:42949672.95', 'regex:/^\d+(?:[.,]\d{1,2})?$/'],
             'sale_price' => ['nullable', 'numeric', 'min:0', 'max:42949672.95', 'regex:/^\d+(?:[.,]\d{1,2})?$/'],
+            'icms_rate' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'ipi_rate' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'import_tax_rate' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'export_tax_rate' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'iss_rate' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'operational_cost_rate' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'profit_rate' => ['nullable', 'numeric', 'min:0', 'max:999999.9999'],
+            'other_costs' => ['nullable', 'numeric', 'min:0', 'max:42949672.95', 'regex:/^\d+(?:[.,]\d{1,2})?$/'],
             'minimum_stock' => ['required', 'numeric', 'min:0', 'max:999999999.999', 'regex:/^\d+(?:[.,]\d{1,3})?$/'],
             'shelf' => ['nullable', 'string', 'max:80'],
         ];
@@ -145,5 +157,12 @@ final class ProductController extends Controller
     private function toCents(mixed $value): int
     {
         return (int) round((float) str_replace(',', '.', (string) ($value ?: '0')) * 100);
+    }
+
+    private function normalizePriceRates(array &$data): void
+    {
+        foreach (['icms_rate', 'ipi_rate', 'import_tax_rate', 'export_tax_rate', 'iss_rate', 'operational_cost_rate', 'profit_rate'] as $field) {
+            $data[$field] = $data[$field] ?? 0;
+        }
     }
 }
