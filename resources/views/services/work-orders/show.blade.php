@@ -240,7 +240,7 @@
             <h2>Atualizar andamento</h2>
             <form method="post" action="{{ route('services.work-orders.status', $order->id) }}" id="work-order-status-form" class="grid" style="max-width:950px">
                 <?= csrf_field() ?><?= method_field('PATCH') ?>
-                <div class="field"><label for="status">Próxima situação</label><select id="status" name="status" required style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit">
+                <div class="field"><label for="status">Situação da OS</label><select id="status" name="status" required style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit">
                     <?php foreach ($nextStatuses as $key) { ?><option value="{{ $key }}" <?= old('status', $nextStatuses[0] ?? '') === $key ? 'selected' : '' ?>>{{ $statuses[$key] }}</option><?php } ?>
                     <?php if ($canRequestCancellation) { ?><option value="cancelled" <?= old('status') === 'cancelled' ? 'selected' : '' ?>>Cancelar OS</option><?php } ?>
                 </select></div>
