@@ -55,6 +55,7 @@ final class PurchaseController extends Controller
         return view('purchases.create', [
             'suppliers' => Supplier::query()->where('status', 'active')->orderBy('name')->get(),
             'products' => Product::query()->where('status', 'active')->orderBy('name')->get(),
+            'newlyCreatedProduct' => Product::query()->where('company_id', $context->id())->where('status', 'active')->find($request->query('new_product_id')),
             'supplierId' => $supplierId,
             'requestKey' => (string) Str::uuid(),
         ]);
