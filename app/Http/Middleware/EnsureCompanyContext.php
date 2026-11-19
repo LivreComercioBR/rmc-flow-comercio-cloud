@@ -23,7 +23,9 @@ final class EnsureCompanyContext
             ->with('company')
             ->first();
 
-        if (! $membership || ! $membership->company) {\n            return redirect()->route('companies.index');\n        }
+        if (! $membership || ! $membership->company) {
+            return redirect()->route('companies.index');
+        }
         app(CompanyContext::class)->set($membership->company);
 
         $hasActiveSubscription = $membership->company->subscriptions()
