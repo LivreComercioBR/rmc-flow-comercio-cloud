@@ -66,7 +66,8 @@ final class ServiceWorkOrderController extends Controller
 
     public function show(int $workOrder, CompanyContext $context): View
     {
-        abort_unless($context->id(), 403);
+        $company = $context->company();
+        abort_unless($company, 403);
         $order = ServiceWorkOrder::query()->with(['customer', 'quote', 'appointment', 'asset', 'items.product', 'creator'])->findOrFail($workOrder);
         $next = $order->stock_applied_at
             ? array_values(array_unique(array_merge(
@@ -79,6 +80,9 @@ final class ServiceWorkOrderController extends Controller
                 [$order->status],
                 array_diff(['open', 'diagnosis', 'awaiting_quote', 'quote', 'awaiting_approval', 'approved', 'in_maintenance', 'awaiting_part', 'in_progress', 'completed', 'awaiting_payment'], [$order->status])
             )));
+        $address = $company->settings()->where('setting_key', 'company.address')->first()?->setting_value ?? [];
+        if (! is_array($address)) $address = [];
+        $addressText = implode(', ', array_filter([$address['street'] ?? null, $address['number'] ?? null, $address['district'] ?? null, $address['city'] ?? null, $address['state'] ?? null, $address['postal_code'] ?? null]));
         $order->load(['receivable.payments.creator', 'refunds.creator', 'refunds.approver', 'cancelledBy', 'cancellationApprover']);
         $cashSessionOpen = CashSession::query()->where('status', 'open')->exists();
         $role = CompanyMembership::query()->where('company_id', $context->id())->where('user_id', auth()->id())->where('status', 'active')->value('role');
@@ -94,7 +98,7 @@ final class ServiceWorkOrderController extends Controller
         $defaultRefundMethod = $refundOptions->keys()->first();
         if (! $cashSessionOpen && $defaultRefundMethod === 'cash') $defaultRefundMethod = $refundOptions->keys()->skip(1)->first();
 
-        return view('services.work-orders.show', ['order' => $order, 'products' => Product::query()->where('company_id', $context->id())->where('status', 'active')->orderBy('name')->get(), 'serviceCatalog' => ServiceCatalogItem::query()->where('company_id', $context->id())->where('status', 'active')->orderBy('name')->get(), 'statuses' => self::STATUSES, 'nextStatuses' => $next, 'cashSessionOpen' => $cashSessionOpen, 'role' => $role, 'canRequestCancellation' => in_array($role, ['Administrador', 'Atendente'], true), 'refundOptions' => $refundOptions, 'defaultRefundMethod' => $defaultRefundMethod, 'refundRequestKey' => (string) Str::uuid()]);
+        return view('services.work-orders.show', ['order' => $order, 'company' => $company, 'addressText' => $addressText, 'products' => Product::query()->where('company_id', $context->id())->where('status', 'active')->orderBy('name')->get(), 'serviceCatalog' => ServiceCatalogItem::query()->where('company_id', $context->id())->where('status', 'active')->orderBy('name')->get(), 'statuses' => self::STATUSES, 'nextStatuses' => $next, 'cashSessionOpen' => $cashSessionOpen, 'role' => $role, 'canRequestCancellation' => in_array($role, ['Administrador', 'Atendente'], true), 'refundOptions' => $refundOptions, 'defaultRefundMethod' => $defaultRefundMethod, 'refundRequestKey' => (string) Str::uuid()]);
     }
 
     public function createFromQuote(Request $request, int $quote, CompanyContext $context, AuditTrailService $audit): RedirectResponse
