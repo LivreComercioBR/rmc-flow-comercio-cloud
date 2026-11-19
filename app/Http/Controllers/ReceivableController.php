@@ -35,7 +35,8 @@ final class ReceivableController extends Controller
         ]);
         $search = trim((string) ($filters['q'] ?? ''));
         $today = now()->toDateString();
-        $cashSessionOpen = CashSession::query()->where('status', 'open')->where('opened_by', request()->user()->id)->exists();
+        $cashSessionOpen = CashSession::query()->where('status', 'open')->where('opened_by', $request->user()->id)->exists();
+        $role = $request->user()->companyMemberships()->where('company_id', $context->id())->where('status', 'active')->value('role');
         $receivables = AccountReceivable::query()->with(['sale.customer', 'customer', 'category', 'payments.creator', 'workOrder'])->orderByDesc('id')
             ->when(($filters['status'] ?? null) === 'open', fn ($q) => $q->whereIn('status', ['pending', 'partial']))
             ->when(($filters['status'] ?? null) === 'overdue', fn ($q) => $q->whereIn('status', ['pending', 'partial'])->where('due_date', '<', $today))
@@ -52,7 +53,7 @@ final class ReceivableController extends Controller
             ->orderByRaw("CASE WHEN status IN ('pending','partial') AND due_date < ? THEN 0 ELSE 1 END", [$today])
             ->orderBy('due_date')->orderBy('id')->paginate(25)->withQueryString();
         $requestKeys = $receivables->getCollection()->mapWithKeys(fn ($row) => [$row->id => (string) Str::uuid()]);
-        return view('receivables.index', compact('receivables', 'filters', 'search', 'today', 'cashSessionOpen', 'requestKeys'));
+        return view('receivables.index', compact('receivables', 'filters', 'search', 'today', 'cashSessionOpen', 'requestKeys', 'role'));
     }
 
     public function create(Request $request, CompanyContext $context): View

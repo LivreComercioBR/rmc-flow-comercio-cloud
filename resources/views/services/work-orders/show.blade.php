@@ -58,7 +58,7 @@
                     <?php if ($order->asset_color) { ?> · {{ $order->asset_color }}<?php } ?>
                     <?php if ($order->asset_identifier) { ?> · Identificação: {{ $order->asset_identifier }}<?php } ?>
                 </div>
-                <?php if ($order->service_asset_id) { ?><a class="no-print" href="{{ route('services.assets.show', $order->service_asset_id) }}">Ver histórico deste veículo/equipamento</a><?php } ?>
+                <?php if ($order->service_asset_id && $role !== 'Atendente') { ?><a class="no-print" href="{{ route('services.assets.show', $order->service_asset_id) }}">Ver histórico deste veículo/equipamento</a><?php } ?>
             </div>
         <?php } ?>
 
@@ -81,7 +81,7 @@
             <div style="margin:18px 0"><strong>Diagnóstico</strong><p style="white-space:pre-line">{{ $order->diagnosis }}</p></div>
         <?php } ?>
 
-        <?php if (! in_array($order->status, ['completed', 'awaiting_payment', 'ready', 'finalized', 'cancelled'], true) && ! $order->stock_applied_at) { ?>
+        <?php if ($role !== 'Atendente' && ! in_array($order->status, ['completed', 'awaiting_payment', 'ready', 'finalized', 'cancelled'], true) && ! $order->stock_applied_at) { ?>
             <div class="no-print" style="margin:18px 0;padding:16px;border:1px solid #cbd5e1;border-radius:8px">
                 <h2>Peças e mão de obra do orçamento</h2>
                 <p class="muted">Adicione os itens necessários após o diagnóstico. O estoque só será baixado quando o serviço for concluído.</p>
@@ -153,7 +153,7 @@
                 <tbody>
                     <?php foreach ($order->items as $item) { ?>
                         <tr>
-                            <td style="padding:10px;border-bottom:1px solid #dbe3ed"><strong>{{ $item->name }}</strong><?php if ($item->description) { ?><br>{{ $item->description }}<?php } ?><?php if (! in_array($order->status, ['completed', 'awaiting_payment', 'ready', 'finalized', 'cancelled'], true) && ! $order->stock_applied_at) { ?><form class="no-print" method="post" action="{{ route('services.work-orders.items.remove', [$order->id, $item->id]) }}" style="margin-top:6px"><?= csrf_field() ?><?= method_field('DELETE') ?><button class="btn secondary" type="submit">Remover</button></form><?php } ?></td>
+                            <td style="padding:10px;border-bottom:1px solid #dbe3ed"><strong>{{ $item->name }}</strong><?php if ($item->description) { ?><br>{{ $item->description }}<?php } ?><?php if ($role !== 'Atendente' && ! in_array($order->status, ['completed', 'awaiting_payment', 'ready', 'finalized', 'cancelled'], true) && ! $order->stock_applied_at) { ?><form class="no-print" method="post" action="{{ route('services.work-orders.items.remove', [$order->id, $item->id]) }}" style="margin-top:6px"><?= csrf_field() ?><?= method_field('DELETE') ?><button class="btn secondary" type="submit">Remover</button></form><?php } ?></td>
                             <td style="padding:10px;border-bottom:1px solid #dbe3ed">{{ number_format((float) $item->quantity, 3, ',', '.') }}</td>
                             <td style="padding:10px;border-bottom:1px solid #dbe3ed">R$ {{ number_format($item->unit_price_cents / 100, 2, ',', '.') }}</td>
                             <td style="padding:10px;border-bottom:1px solid #dbe3ed">R$ {{ number_format($item->total_cents / 100, 2, ',', '.') }}</td>
@@ -237,14 +237,14 @@
         <?php if ($order->stock_applied_at) { ?><p class="muted">Peças baixadas do estoque em {{ $order->stock_applied_at->format('d/m/Y H:i') }}.<?php if ($order->stock_reversed_at) { ?> Estorno em {{ $order->stock_reversed_at->format('d/m/Y H:i') }}<?php } ?></p><?php } ?>
     </div>
 
-    <?php if ($order->status === 'approved') { ?>
+    <?php if ($role !== 'Atendente' && $order->status === 'approved') { ?>
         <form class="no-print" method="post" action="{{ route('services.work-orders.status', $order->id) }}" style="margin:18px 0">
             <?= csrf_field() ?><?= method_field('PATCH') ?>
             <input type="hidden" name="status" value="in_maintenance">
             <button class="btn" type="submit">Avançar status para Em manutenção</button>
         </form>
     <?php } ?>
-    <?php if ($order->status !== 'cancelled' && $order->status !== 'finalized' && ($nextStatuses || $canRequestCancellation)) { ?>
+    <?php if ($role !== 'Atendente' && $order->status !== 'cancelled' && $order->status !== 'finalized' && ($nextStatuses || $canRequestCancellation)) { ?>
         <div class="no-print" style="max-width:950px;margin:18px auto 0;border-top:1px solid #e1e8f0;padding-top:18px">
             <h2>Atualizar andamento</h2>
             <form method="post" action="{{ route('services.work-orders.status', $order->id) }}" id="work-order-status-form" class="grid" style="max-width:950px">
