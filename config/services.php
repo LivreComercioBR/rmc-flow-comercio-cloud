@@ -51,7 +51,7 @@ return [
     ],
     'support' => [
         'email' => env('SUPPORT_EMAIL', 'contato@rmcsites.com.br'),
-        'whatsapp' => env('SUPPORT_WHATSAPP'),
+        'whatsapp' => env('SUPPORT_WHATSAPP', '5519990136498'),
     ],
 
 ];
