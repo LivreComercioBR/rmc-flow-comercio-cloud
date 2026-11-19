@@ -84,7 +84,7 @@ final class ServiceWorkOrderController extends Controller
         if (! is_array($address)) $address = [];
         $addressText = implode(', ', array_filter([$address['street'] ?? null, $address['number'] ?? null, $address['district'] ?? null, $address['city'] ?? null, $address['state'] ?? null, $address['postal_code'] ?? null]));
         $order->load(['receivable.payments.creator', 'refunds.creator', 'refunds.approver', 'cancelledBy', 'cancellationApprover']);
-        $cashSessionOpen = CashSession::query()->where('status', 'open')->exists();
+        $cashSessionOpen = CashSession::query()->where('status', 'open')->where('opened_by', $request->user()->id)->exists();
         $role = CompanyMembership::query()->where('company_id', $context->id())->where('user_id', auth()->id())->where('status', 'active')->value('role');
         $receivedByMethod = AccountReceivablePayment::query()->whereHas('receivable', fn ($query) => $query->where('service_work_order_id', $order->id))
             ->selectRaw('payment_method, SUM(amount_cents) as total_cents')->groupBy('payment_method')->pluck('total_cents', 'payment_method');
@@ -235,7 +235,7 @@ final class ServiceWorkOrderController extends Controller
 
                 $session = null;
                 if ($data['payment_method'] === 'cash') {
-                    $session = CashSession::query()->where('status', 'open')->orderByDesc('id')->lockForUpdate()->first();
+                    $session = CashSession::query()->where('status', 'open')->where('opened_by', $request->user()->id)->orderByDesc('id')->lockForUpdate()->first();
                     if (! $session) throw ValidationException::withMessages(['payment_method' => 'Abra o caixa antes de devolver dinheiro em espécie.']);
                     if ($amountCents > $cash->expectedBalance($session)) throw ValidationException::withMessages(['amount' => 'O saldo disponível no caixa é insuficiente para esta devolução.']);
                 }
