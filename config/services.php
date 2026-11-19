@@ -49,5 +49,9 @@ return [
         'product_code' => env('SUBSCRIPTION_PANEL_PRODUCT_CODE', 'rmc-flow-comercio-cloud'),
         'secret' => env('SUBSCRIPTION_PANEL_SECRET'),
     ],
+    'support' => [
+        'email' => env('SUPPORT_EMAIL', 'contato@rmcsites.com.br'),
+        'whatsapp' => env('SUPPORT_WHATSAPP'),
+    ],
 
 ];
