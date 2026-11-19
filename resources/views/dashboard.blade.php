@@ -1,5 +1,35 @@
 @extends('layouts.app', ['title' => 'Painel | RMC Flow Comércio Cloud'])
 @section('content')
+<section class="card" style="margin-bottom:18px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+        <section class="company" style="display:block;margin:0;background:#f8fbff">
+            <h2 style="margin:0 0 12px;color:#102c4d;font-size:19px">Assinatura</h2>
+            @if($subscription)
+                <p style="margin:6px 0">Plano: <strong>{{ $subscription->plan?->name ?? 'N&atilde;o identificado' }}</strong></p>
+                <p style="margin:6px 0">Situa&ccedil;&atilde;o: <strong>{{ $subscriptionActive ? 'Ativa' : ($subscription->current_period_end?->isPast() ? 'Vencida' : ucfirst(str_replace('_', ' ', $subscription->status))) }}</strong></p>
+                @if($subscription->current_period_end)<p style="margin:6px 0">Vencimento: <strong>{{ $subscription->current_period_end->format('d/m/Y') }}</strong></p>@endif
+                @php($scheduledPlanChange = ($subscription->metadata ?? [])['scheduled_plan_change'] ?? null)
+                @if($scheduledPlanChange)<p class="muted" style="margin:8px 0">Pr&oacute;xima troca: {{ $scheduledPlanChange['plan_code'] === 'comercio-cloud-essencial' ? 'Essencial' : $scheduledPlanChange['plan_code'] }} em {{ \Illuminate\Support\Carbon::parse($scheduledPlanChange['effective_at'])->format('d/m/Y') }}.</p>@endif
+            @else
+                <p class="muted" style="margin:0 0 12px">Nenhuma assinatura encontrada para esta empresa.</p>
+            @endif
+            <div class="actions" style="flex-wrap:wrap;margin-top:14px">
+                <a class="btn secondary" href="{{ route('subscription.status') }}">Ver dados e op&ccedil;&otilde;es</a>
+                @if($upgradeAvailable)<form method="post" action="{{ route('subscription.checkout') }}">@csrf<input type="hidden" name="plan_code" value="comercio-cloud-equipe"><button class="btn" type="submit">Upgrade para Equipe</button></form>@endif
+                @if($renewalAvailable)<form method="post" action="{{ route('subscription.checkout') }}">@csrf<input type="hidden" name="plan_code" value="{{ $renewalPlan->code }}"><button class="btn" type="submit">Renovar</button></form>@endif
+            </div>
+            @if($subscription && ! $canManageSubscription)<p class="muted" style="margin:10px 0 0">Para alterar ou renovar o plano, solicite ao administrador da empresa.</p>@endif
+        </section>
+        <section class="company" style="display:block;margin:0;background:#f8fbff">
+            <h2 style="margin:0 0 12px;color:#102c4d;font-size:19px">Precisa de suporte?</h2>
+            <p class="muted" style="margin:0 0 12px">Fale com a equipe da RMC Sites se encontrar um problema ou tiver d&uacute;vidas.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:14px">
+                @if($supportEmail)<a href="mailto:{{ $supportEmail }}">{{ $supportEmail }}</a>@endif
+                @if($supportWhatsapp)<a href="https://wa.me/{{ preg_replace('/\D+/', '', $supportWhatsapp) }}" target="_blank" rel="noopener">WhatsApp: {{ $supportWhatsapp }}</a>@endif
+            </div>
+        </section>
+    </div>
+</section>
 <section class="card dashboard-card">
     <p class="muted" style="margin-bottom:8px">PAINEL DA EMPRESA</p>
     <h1 class="title">{{ $company->trade_name }}</h1>
