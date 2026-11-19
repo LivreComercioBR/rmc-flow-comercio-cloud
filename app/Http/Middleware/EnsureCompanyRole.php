@@ -20,7 +20,7 @@ final class EnsureCompanyRole
 
         $routeName = (string) $request->route()?->getName();
         if ($membership->role === 'Atendente') {
-            $allowed = ['dashboard', 'dashboard.values.toggle', 'customers.index', 'customers.create', 'customers.store', 'customers.show', 'customers.edit', 'customers.update', 'customers.deactivate', 'customers.activate', 'products.index', 'sales.index', 'sales.create', 'sales.store', 'sales.show', 'sales.cancel', 'sales.refund', 'cash.index', 'cash.open', 'cash.show', 'cash.movement', 'cash.close'];
+            $allowed = ['dashboard', 'dashboard.values.toggle', 'customers.index', 'customers.create', 'customers.store', 'customers.show', 'customers.edit', 'customers.update', 'customers.deactivate', 'customers.activate', 'products.index', 'sales.index', 'sales.create', 'sales.store', 'sales.show', 'sales.cancel', 'sales.refund', 'cash.index', 'cash.open', 'cash.show', 'cash.movement', 'cash.close', 'receivables.index', 'receivables.pay', 'services.work-orders.index', 'services.work-orders.show', 'services.work-orders.refund'];
             abort_unless(in_array($routeName, $allowed, true), Response::HTTP_FORBIDDEN);
             return $next($request);
         }
