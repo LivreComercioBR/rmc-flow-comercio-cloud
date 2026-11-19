@@ -6,7 +6,7 @@
     @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
 
     @if (! $openSession)
-        <div class="alert alert-warming">Não há caixa aberto para esta empresa.</div>
+        <div class="alert alert-warming">Você ainda não abriu seu caixa.</div>
         <form method="post" action="{{ route('cash.open') }}" class="grid" style="max-width:620px">@csrf
             <div class="field"><label for="opening_amount">Saldo inicial em dinheiro (R$)</label><input id="opening_amount" name="opening_amount" type="number" min="0" max="42949672.95" step="0.01" required value="{{ old('opening_amount', '0.00') }}">@error('opening_amount')<div class="error">{{ $message }}</div>@enderror</div>
             <div><button class="btn" type="submit">Abrir caixa</button></div>
