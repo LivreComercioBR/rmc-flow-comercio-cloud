@@ -86,3 +86,13 @@ Pagamentos de teste podem não enviar notificações automaticamente. O Mercado 
 - [Contas de teste](https://www.mercadopago.com.br/developers/pt/docs/checkout-pro-preferences/test-accounts)
 - [Configurar e simular notificações](https://www.mercadopago.com.br/developers/pt/docs/checkout-pro-preferences/payment-notifications)
 - [Realizar compras de teste](https://www.mercadopago.com.br/developers/pt/docs/checkout-pro-preferences/integration-test/test-purchases)
+
+## Resultados já confirmados — 19/11/2026
+
+- O usuário informou que pagamentos aprovados, recusados e pendentes já foram testados.
+- Renovação antecipada do plano Equipe por R$ 120,00 foi aprovada em sandbox.
+- A primeira notificação foi recebida com HTTP 200, mas o evento ficou `ignored` porque `external_reference=company:1` não correspondia a `provider_reference=purchase:<UUID>`.
+- O webhook foi corrigido para localizar a assinatura pelos metadados autenticados e reprocessar eventos ignorados. Após atualizar a hospedagem e reenviar a notificação do mesmo pagamento, o painel confirmou vencimento em 17/11/2028.
+- Não repetir essa cobrança. Upgrade e downgrade continuam pendentes de homologação própria.
+- Foi identificada uma pendência no downgrade: pagar uma renovação antecipada com troca agendada pode alterar o plano antes da data efetiva exibida. Corrigir essa regra antes de habilitar o cenário para clientes.
+
