@@ -58,7 +58,7 @@
                     <?php if ($order->asset_color) { ?> · {{ $order->asset_color }}<?php } ?>
                     <?php if ($order->asset_identifier) { ?> · Identificação: {{ $order->asset_identifier }}<?php } ?>
                 </div>
-                <?php if ($order->service_asset_id) { ?><a class="no-print" href="{{ route('services.assets.show', $order->service_asset_id) }}">Ver histórico deste veículo/equipamento</a><?php } ?>
+                <?php if ($order->service_asset_id && $role !== 'Atendente') { ?><a class="no-print" href="{{ route('services.assets.show', $order->service_asset_id) }}">Ver histórico deste veículo/equipamento</a><?php } ?>
             </div>
         <?php } ?>
 
