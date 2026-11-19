@@ -24,6 +24,10 @@
         @elseif ($canManagePlan && $subscription->plan->code === 'comercio-cloud-essencial' && $active && $canCheckout)
             @if ($upgradeQuoteCents)<p class="muted">Upgrade para até 10 usuários. Valor proporcional atual: <strong>R$ {{ number_format($upgradeQuoteCents / 100, 2, ',', '.') }}</strong>. O valor final será exibido no checkout antes da confirmação.</p><form method="post" action="{{ route('subscription.checkout') }}">@csrf<input type="hidden" name="plan_code" value="comercio-cloud-equipe"><button class="btn" type="submit">Continuar para o upgrade</button></form>@else<p class="muted">Não há valor proporcional a cobrar neste momento. Faça a troca de plano na renovação.</p>@endif
         @endif
+        @if ($renewalAvailable)
+            <p class="muted">Voc&ecirc; pode renovar antes do vencimento. O novo per&iacute;odo ser&aacute; acrescentado ap&oacute;s {{ $subscription->current_period_end->format('d/m/Y') }}. @if($scheduledPlanChange)O plano agendado {{ $renewalPlan->name }} come&ccedil;ar&aacute; nessa data.@elseO plano renovado ser&aacute; {{ $renewalPlan->name }}.@endif</p>
+            <form method="post" action="{{ route('subscription.checkout') }}">@csrf<input type="hidden" name="plan_code" value="{{ $renewalPlan->code }}"><button class="btn" type="submit">Renovar antecipadamente</button></form>
+        @endif
     @elseif ($awaitingActivation)
         <p class="muted">O pagamento foi confirmado e aguarda a ativa&ccedil;&atilde;o da assinatura. N&atilde;o &eacute; necess&aacute;rio iniciar outra contrata&ccedil;&atilde;o.</p>
     @else
