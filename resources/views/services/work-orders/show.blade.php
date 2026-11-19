@@ -243,7 +243,7 @@
         </form>
     <?php } ?>
     <?php if ($order->status !== 'cancelled' && $order->status !== 'finalized' && ($nextStatuses || $canRequestCancellation)) { ?>
-        <div class="no-print" style="border-top:1px solid #e1e8f0;padding-top:18px">
+        <div class="no-print" style="max-width:950px;margin:18px auto 0;border-top:1px solid #e1e8f0;padding-top:18px">
             <h2>Atualizar andamento</h2>
             <form method="post" action="{{ route('services.work-orders.status', $order->id) }}" id="work-order-status-form" class="grid" style="max-width:950px">
                 <?= csrf_field() ?><?= method_field('PATCH') ?>
