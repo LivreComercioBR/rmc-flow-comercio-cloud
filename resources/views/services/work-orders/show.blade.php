@@ -4,7 +4,6 @@
 <section class="card">
     <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
         <div>
-            <p class="muted">MÓDULO DE SERVIÇOS</p>
             <h1 class="title">Ordem de serviço #{{ str_pad((string) $order->work_order_number, 5, '0', STR_PAD_LEFT) }}</h1>
         </div>
         <div class="actions">
