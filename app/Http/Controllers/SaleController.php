@@ -80,11 +80,11 @@ final class SaleController extends Controller
         $cashSessionOpen = CashSession::query()->where('status', 'open')->exists();
         if (! $cashSessionOpen) $refundOptions = $refundOptions->except('cash');
         $customerName = $sale->customer?->name ?? 'Consumidor';
-        $whatsappText = "Venda #{$sale->sale_number} - {$company->trade_name}\\nData: ".$sale->sold_at->format('d/m/Y H:i')."\\nCliente: {$customerName}\\n";
+        $whatsappText = "Venda #{$sale->sale_number} - {$company->trade_name}\nData: ".$sale->sold_at->format('d/m/Y H:i')."\nCliente: {$customerName}\n";
         foreach ($sale->items as $item) {
-            $whatsappText .= "\\n{$item->product_name} | ".number_format((float) $item->quantity, 3, ',', '.')." x R$ ".number_format($item->unit_price_cents / 100, 2, ',', '.')." = R$ ".number_format($item->line_total_cents / 100, 2, ',', '.');
+            $whatsappText .= "\n{$item->product_name} | ".number_format((float) $item->quantity, 3, ',', '.')." x R$ ".number_format($item->unit_price_cents / 100, 2, ',', '.')." = R$ ".number_format($item->line_total_cents / 100, 2, ',', '.');
         }
-        $whatsappText .= "\\n\\nTotal: R$ ".number_format($sale->total_cents / 100, 2, ',', '.');
+        $whatsappText .= "\n\nTotal: R$ ".number_format($sale->total_cents / 100, 2, ',', '.');
         $phone = preg_replace('/\\D+/', '', (string) $sale->customer?->phone);
         if (strlen($phone) === 10 || strlen($phone) === 11) $phone = '55'.$phone;
         if (! in_array(strlen($phone), [12, 13], true)) $phone = '';
