@@ -58,7 +58,7 @@ final class DashboardController extends Controller
         $overduePayables = AccountPayable::query()->whereIn('status', ['pending', 'partial'])->where('due_date', '<', now()->toDateString())->count();
         $openReceivableCents = (int) AccountReceivable::query()->whereIn('status', ['pending', 'partial'])->selectRaw('COALESCE(SUM(amount_cents - paid_cents - cancelled_balance_cents), 0) as total')->value('total');
         $overdueReceivables = AccountReceivable::query()->whereIn('status', ['pending', 'partial'])->where('due_date', '<', now()->toDateString())->count();
-        $openCashSession = CashSession::query()->where('status', 'open')->first();
+        $openCashSession = CashSession::query()->where('status', 'open')->where('opened_by', $request->user()->id)->first();
         $cashBalanceCents = $openCashSession ? $cash->expectedBalance($openCashSession) : null;
 
         $hideValues = (bool) $request->session()->get('dashboard.hide_values.'.$company->id, false);
