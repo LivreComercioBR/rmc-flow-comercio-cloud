@@ -185,7 +185,8 @@
     list.querySelectorAll('.quote-item').forEach(attachRow);
     document.getElementById('add-quote-item').addEventListener('click', () => {
         const fragment = template.content.cloneNode(true);
-        fragment.querySelectorAll('[name]').forEach((field) => { field.name = field.name.replaceAll('__INDEX__', String(nextIndex++)); });
+        const rowIndex = nextIndex++;
+        fragment.querySelectorAll('[name]').forEach((field) => { field.name = field.name.replaceAll('__INDEX__', String(rowIndex)); });
         list.appendChild(fragment);
         attachRow(list.lastElementChild);
     });
