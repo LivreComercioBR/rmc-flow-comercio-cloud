@@ -35,7 +35,7 @@
             <div class="actions" style="flex-wrap:wrap;margin-top:14px">
                 <a class="btn secondary" href="{{ route('subscription.status') }}">Ver dados e op&ccedil;&otilde;es</a>
                 @if($upgradeAvailable)<form method="post" action="{{ route('subscription.checkout') }}">@csrf<input type="hidden" name="plan_code" value="comercio-cloud-equipe"><button class="btn" type="submit">Upgrade para Equipe</button></form>@endif
-                @if($renewalAvailable)<form method="post" action="{{ route('subscription.checkout') }}">@csrf<input type="hidden" name="plan_code" value="{{ $renewalPlan->code }}"><button class="btn" type="submit">Renovar</button></form>@endif
+                @if($renewalAvailable)<form method="post" action="{{ route('subscription.checkout') }}">@csrf<input type="hidden" name="plan_code" value="{{ $renewalPlan->code }}"><button class="btn" type="submit">{{ $subscriptionActive ? 'Renovar antecipadamente' : 'Renovar' }}</button></form>@endif
             </div>
             @if($subscription && ! $canManageSubscription)<p style="margin:10px 0 0;color:#a8d6cd">Para alterar ou renovar o plano, solicite ao administrador da empresa.</p>@endif
         </div>
