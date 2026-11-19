@@ -267,12 +267,24 @@ final class ServiceQuoteController extends Controller
             'items.*.description' => ['nullable', 'string', 'max:1000'],
             'items.*.quantity' => ['required', 'numeric', 'gt:0', 'max:100000', 'regex:/^\d+(?:[.,]\d{1,3})?$/'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99', 'regex:/^\d+(?:[.,]\d{1,2})?$/'],
+        ], [
+            'request_key.required' => 'A chave do formulário expirou. Recarregue a página e tente novamente.',
+            'request_key.uuid' => 'A chave do formulário é inválida. Recarregue a página e tente novamente.',
+            'customer_id.required' => 'Selecione um cliente na lista de resultados.',
+            'customer_id.integer' => 'Selecione novamente o cliente.',
+            'customer_id.exists' => 'O cliente selecionado não está mais disponível. Escolha outro.',
+            'expires_at.required' => 'Informe a validade do orçamento.',
+            'expires_at.date' => 'Informe uma data válida para a validade do orçamento.',
+            'items.required' => 'Adicione ao menos um item ao orçamento.',
+            'items.array' => 'A lista de itens do orçamento está inválida. Recarregue a página.',
+            'items.*.item_type.required' => 'Selecione o tipo de cada item do orçamento.',
+            'items.*.quantity.required' => 'Informe a quantidade de cada item.',
         ]);
         $expires = Carbon::parse($data['expires_at'], $timezone)->startOfDay();
         if ($expires->lt(now($timezone)->startOfDay())) throw ValidationException::withMessages(['expires_at' => 'A validade precisa ser hoje ou uma data futura.']);
         foreach ($data['items'] as $index => $item) {
             if ($item['item_type'] === 'manual') {
-                Validator::make($item, ['name' => ['required', 'string', 'max:180'], 'unit_price' => ['required', 'numeric', 'min:0', 'max:99999999.99', 'regex:/^\d+(?:[.,]\d{1,2})?$/']])->validate();
+                Validator::make($item, ['name' => ['required', 'string', 'max:180'], 'unit_price' => ['required', 'numeric', 'min:0', 'max:99999999.99', 'regex:/^\d+(?:[.,]\d{1,2})?$/']], ['name.required' => 'Informe o nome do item manual.', 'unit_price.required' => 'Informe o preço do item manual.'])->validate();
             } else {
                 Validator::make($item, ['source_id' => ['required', 'integer']], ['source_id.required' => 'Selecione um produto ou serviço na lista de busca antes de salvar.'])->validate();
             }
