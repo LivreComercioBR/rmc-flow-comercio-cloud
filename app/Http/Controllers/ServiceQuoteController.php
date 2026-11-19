@@ -274,7 +274,7 @@ final class ServiceQuoteController extends Controller
             if ($item['item_type'] === 'manual') {
                 Validator::make($item, ['name' => ['required', 'string', 'max:180'], 'unit_price' => ['required', 'numeric', 'min:0', 'max:99999999.99', 'regex:/^\d+(?:[.,]\d{1,2})?$/']])->validate();
             } else {
-                Validator::make($item, ['source_id' => ['required', 'integer']])->validate();
+                Validator::make($item, ['source_id' => ['required', 'integer']], ['source_id.required' => 'Selecione um produto ou serviço na lista de busca antes de salvar.'])->validate();
             }
         }
 
