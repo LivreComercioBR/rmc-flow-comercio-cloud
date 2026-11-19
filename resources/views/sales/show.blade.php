@@ -1,12 +1,15 @@
 @extends('layouts.app', ['title' => 'Venda #'.$sale->sale_number.' | RMC Flow Comércio Cloud'])
 @section('content')
 <section class="card">
-    <div style="max-width:950px;margin:0 auto 22px;border-bottom:2px solid #102c4d;padding-bottom:16px">
-        <h2 style="margin:0 0 8px">{{ $company->trade_name }}</h2>
-        @if ($company->legal_name)<div>{{ $company->legal_name }}</div>@endif
-        @if ($company->document)<div>Documento: {{ $company->document }}</div>@endif
-        @if ($company->phone)<div>Telefone: {{ $company->phone }}</div>@endif
-        @if ($addressText !== '')<div>{{ $addressText }}</div>@endif
+    <div style="max-width:950px;margin:0 auto 22px;border-bottom:2px solid #102c4d;padding-bottom:16px;display:flex;align-items:center;gap:18px">
+        <img src="https://rmcsites.com.br/assets/brand/rmc-sites.png" alt="Logomarca da RMC Sites" style="width:82px;height:82px;object-fit:contain;flex:0 0 auto">
+        <div>
+            <h2 style="margin:0 0 8px">{{ $company->trade_name }}</h2>
+            @if ($company->legal_name)<div>{{ $company->legal_name }}</div>@endif
+            @if ($company->document)<div>Documento: {{ $company->document }}</div>@endif
+            @if ($company->phone)<div>Telefone: {{ $company->phone }}</div>@endif
+            @if ($addressText !== '')<div>{{ $addressText }}</div>@endif
+        </div>
     </div>
     @if (session('sale_notice'))<div class="alert alert-success">{{ session('sale_notice') }}</div>@endif
     @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
