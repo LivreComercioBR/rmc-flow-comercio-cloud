@@ -35,7 +35,7 @@ final class ReceivableController extends Controller
         ]);
         $search = trim((string) ($filters['q'] ?? ''));
         $today = now()->toDateString();
-        $cashSessionOpen = CashSession::query()->where('status', 'open')->exists();
+        $cashSessionOpen = CashSession::query()->where('status', 'open')->where('opened_by', request()->user()->id)->exists();
         $receivables = AccountReceivable::query()->with(['sale.customer', 'customer', 'category', 'payments.creator', 'workOrder'])->orderByDesc('id')
             ->when(($filters['status'] ?? null) === 'open', fn ($q) => $q->whereIn('status', ['pending', 'partial']))
             ->when(($filters['status'] ?? null) === 'overdue', fn ($q) => $q->whereIn('status', ['pending', 'partial'])->where('due_date', '<', $today))
@@ -129,7 +129,7 @@ final class ReceivableController extends Controller
                 $sale = $record->sale_id ? Sale::query()->whereKey($record->sale_id)->lockForUpdate()->first() : null;
                 $session = null;
                 if ($data['payment_method'] === 'cash') {
-                    $session = CashSession::query()->where('status', 'open')->orderByDesc('id')->lockForUpdate()->first();
+                    $session = CashSession::query()->where('status', 'open')->where('opened_by', $request->user()->id)->orderByDesc('id')->lockForUpdate()->first();
                     if (! $session) throw ValidationException::withMessages(['payment_method' => 'Abra o Caixa antes de registrar recebimento em dinheiro.']);
                     app(\App\Services\Cash\CashRegisterService::class)->assertIncomingFits($session, $amountCents);
                 }

@@ -77,7 +77,7 @@ final class SaleController extends Controller
         foreach ($sale->refunds->groupBy('payment_method') as $method => $refunds) $received[$method] = max(0, (int) ($received[$method] ?? 0) - (int) $refunds->sum('amount_cents'));
         $refundOptions = $received->filter(fn ($amount) => $amount > 0)->mapWithKeys(fn ($amount, $method) => [$method => ['label' => $methodNames[$method] ?? $method, 'remaining_cents' => (int) $amount]]);
 
-        $cashSessionOpen = CashSession::query()->where('status', 'open')->exists();
+        $cashSessionOpen = CashSession::query()->where('status', 'open')->where('opened_by', request()->user()->id)->exists();
         if (! $cashSessionOpen) $refundOptions = $refundOptions->except('cash');
         $customerName = $sale->customer?->name ?? 'Consumidor';
         $whatsappText = "Venda #{$sale->sale_number} - {$company->trade_name}\nData: ".$sale->sold_at->format('d/m/Y H:i')."\nCliente: {$customerName}\n";

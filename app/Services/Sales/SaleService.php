@@ -152,7 +152,7 @@ final class SaleService
 
             $session = null;
             if ($data['payment_method'] === 'cash') {
-                $session = CashSession::query()->where('status', 'open')->orderByDesc('id')->lockForUpdate()->first();
+                $session = CashSession::query()->where('status', 'open')->where('opened_by', $userId)->orderByDesc('id')->lockForUpdate()->first();
                 if (! $session) throw ValidationException::withMessages(['payment_method' => 'Abra o Caixa antes de devolver dinheiro em espécie.']);
                 $cash = $this->cashBalance($session);
                 if ((int) $data['amount_cents'] > $cash) throw ValidationException::withMessages(['amount' => 'O saldo disponível no Caixa é insuficiente para esta devolução.']);
@@ -201,7 +201,7 @@ final class SaleService
 
     private function recordCashIn(SalePayment $payment, int $saleNumber, ?int $userId): void
     {
-        $session = CashSession::query()->where('status', 'open')->orderByDesc('id')->lockForUpdate()->first();
+        $session = CashSession::query()->where('status', 'open')->where('opened_by', $userId)->orderByDesc('id')->lockForUpdate()->first();
         if (! $session) throw ValidationException::withMessages(['payments' => 'Abra o Caixa antes de receber pagamentos em dinheiro.']);
         $this->cashRegister->assertIncomingFits($session, (int) $payment->amount_cents);
         CashMovement::create(['company_id' => $session->company_id, 'cash_session_id' => $session->id, 'direction' => 'in', 'movement_type' => 'sale_payment', 'amount_cents' => $payment->amount_cents, 'description' => 'Recebimento da venda #'.$saleNumber, 'source_type' => 'sale_payment', 'source_id' => $payment->id, 'created_by' => $userId]);

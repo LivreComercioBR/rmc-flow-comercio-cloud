@@ -20,10 +20,12 @@ final class CashRegisterController extends Controller
     public function index(CompanyContext $context, CashRegisterService $cash): View
     {
         abort_unless($context->id(), 403);
-        $openSession = CashSession::query()->where('status', 'open')->with(['opener', 'movements.creator'])->first();
-        $expectedCents = $openSession ? $cash->expectedBalance($openSession) : null;
-        $history = CashSession::query()->where('status', 'closed')->with(['opener', 'closer'])->latest('closed_at')->paginate(15);
         $role = CompanyMembership::query()->where('company_id', $context->id())->where('user_id', auth()->id())->where('status', 'active')->value('role');
+        $openSession = CashSession::query()->where('status', 'open')->where('opened_by', auth()->id())->with(['opener', 'movements.creator'])->first();
+        $expectedCents = $openSession ? $cash->expectedBalance($openSession) : null;
+        $history = CashSession::query()->where('status', 'closed')
+            ->when($role !== 'Administrador', fn ($query) => $query->where('opened_by', auth()->id()))
+            ->with(['opener', 'closer'])->latest('closed_at')->paginate(15);
         $refundIds = $openSession?->movements->where('source_type', 'sale_refund')->pluck('source_id')->filter()->unique() ?? collect();
         $refundsById = SaleRefund::query()->with(['creator', 'approver'])->whereIn('id', $refundIds)->get()->keyBy('id');
         $workOrderRefundIds = $openSession?->movements->where('source_type', 'service_work_order_refund')->pluck('source_id')->filter()->unique() ?? collect();
@@ -35,6 +37,8 @@ final class CashRegisterController extends Controller
     {
         abort_unless($context->id(), 403);
         $record = CashSession::query()->with(['opener', 'closer', 'movements.creator'])->findOrFail($session);
+        $role = CompanyMembership::query()->where('company_id', $context->id())->where('user_id', auth()->id())->where('status', 'active')->value('role');
+        abort_unless($role === 'Administrador' || (int) $record->opened_by === (int) auth()->id(), 403);
         $calculatedCents = $cash->expectedBalance($record);
         $refundIds = $record->movements->where('source_type', 'sale_refund')->pluck('source_id')->filter()->unique();
         $refundsById = SaleRefund::query()->with(['creator', 'approver', 'sale'])->whereIn('id', $refundIds)->get()->keyBy('id');
@@ -92,7 +96,7 @@ final class CashRegisterController extends Controller
     private function findOpenSession(int $session, CompanyContext $context): CashSession
     {
         abort_unless($context->id(), 403);
-        return CashSession::query()->where('status', 'open')->findOrFail($session);
+        return CashSession::query()->where('status', 'open')->where('opened_by', auth()->id())->findOrFail($session);
     }
 
     private function toCents(mixed $value): int

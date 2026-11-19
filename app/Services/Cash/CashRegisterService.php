@@ -16,12 +16,12 @@ final class CashRegisterService
 
     public function __construct(private readonly AuditTrailService $audit) {}
 
-    public function open(int $companyId, int $openingCents, ?int $userId): CashSession
+    public function open(int $companyId, int $openingCents, int $userId): CashSession
     {
         return DB::transaction(function () use ($companyId, $openingCents, $userId): CashSession {
             Company::query()->whereKey($companyId)->lockForUpdate()->firstOrFail();
-            if (CashSession::query()->where('status', 'open')->exists()) {
-                throw ValidationException::withMessages(['cash' => 'Já existe um caixa aberto para esta empresa. Feche-o antes de abrir outro.']);
+            if (CashSession::query()->where('status', 'open')->where('opened_by', $userId)->exists()) {
+                throw ValidationException::withMessages(['cash' => 'Você já tem um caixa aberto. Feche o seu caixa antes de abrir outro.']);
             }
 
             $session = CashSession::create([
@@ -91,7 +91,7 @@ final class CashRegisterService
                 return $existingMovement->session;
             }
 
-            $session = CashSession::query()->where('status', 'open')->orderByDesc('id')->lockForUpdate()->first();
+            $session = CashSession::query()->where('status', 'open')->where('opened_by', $userId)->orderByDesc('id')->lockForUpdate()->first();
             if (! $session) {
                 throw ValidationException::withMessages(['payment' => 'Abra o caixa antes de registrar um pagamento de conta em dinheiro.']);
             }

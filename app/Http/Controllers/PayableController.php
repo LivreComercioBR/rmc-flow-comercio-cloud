@@ -25,7 +25,7 @@ final class PayableController extends Controller
         abort_unless($context->id(), 403);
         $filters = $request->validate(['status' => ['nullable', Rule::in(['open', 'overdue', 'paid', 'cancelled'])]]);
         $today = now()->toDateString();
-        $cashSessionOpen = CashSession::query()->where('status', 'open')->exists();
+        $cashSessionOpen = CashSession::query()->where('status', 'open')->where('opened_by', request()->user()->id)->exists();
         $payables = AccountPayable::query()->with(['supplier', 'category', 'purchase', 'payments.creator'])
             ->when(($filters['status'] ?? null) === 'open', fn ($query) => $query->whereIn('status', ['pending', 'partial']))
             ->when(($filters['status'] ?? null) === 'overdue', fn ($query) => $query->whereIn('status', ['pending', 'partial'])->where('due_date', '<', $today))
