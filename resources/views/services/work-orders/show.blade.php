@@ -26,7 +26,14 @@
     <div style="max-width:950px;margin:22px auto">
         <div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-bottom:2px solid #102c4d;padding-bottom:16px">
             <div>
-                <h2 style="margin:0 0 8px">{{ $order->customer->name }}</h2>
+                <h2 style="margin:0 0 8px">{{ $company->trade_name }}</h2>
+                <?php if ($company->legal_name) { ?><div>{{ $company->legal_name }}</div><?php } ?>
+                <?php if ($company->document) { ?><div>Documento: {{ $company->document }}</div><?php } ?>
+                <?php if ($company->phone) { ?><div>Telefone: {{ $company->phone }}</div><?php } ?>
+                <?php if ($addressText) { ?><div>{{ $addressText }}</div><?php } ?>
+            </div>
+            <div>
+                <strong>Cliente:</strong> {{ $order->customer->name }}<br>
                 <?php if ($order->customer->document) { ?><div>{{ $order->customer->document }}</div><?php } ?>
                 <?php if ($order->customer->phone) { ?><div>{{ $order->customer->phone }}</div><?php } ?>
             </div>
