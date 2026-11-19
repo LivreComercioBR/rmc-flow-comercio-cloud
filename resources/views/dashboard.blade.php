@@ -1,35 +1,5 @@
 @extends('layouts.app', ['title' => 'Painel | RMC Flow Comércio Cloud'])
 @section('content')
-<section class="card" style="margin-bottom:18px">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
-        <section class="company" style="display:block;margin:0;background:#f8fbff">
-            <h2 style="margin:0 0 12px;color:#102c4d;font-size:19px">Assinatura</h2>
-            @if($subscription)
-                <p style="margin:6px 0">Plano: <strong>{{ $subscription->plan?->name ?? 'N&atilde;o identificado' }}</strong></p>
-                <p style="margin:6px 0">Situa&ccedil;&atilde;o: <strong>{{ $subscriptionActive ? 'Ativa' : ($subscription->current_period_end?->isPast() ? 'Vencida' : ucfirst(str_replace('_', ' ', $subscription->status))) }}</strong></p>
-                @if($subscription->current_period_end)<p style="margin:6px 0">Vencimento: <strong>{{ $subscription->current_period_end->format('d/m/Y') }}</strong></p>@endif
-                @php($scheduledPlanChange = ($subscription->metadata ?? [])['scheduled_plan_change'] ?? null)
-                @if($scheduledPlanChange)<p class="muted" style="margin:8px 0">Pr&oacute;xima troca: {{ $scheduledPlanChange['plan_code'] === 'comercio-cloud-essencial' ? 'Essencial' : $scheduledPlanChange['plan_code'] }} em {{ \Illuminate\Support\Carbon::parse($scheduledPlanChange['effective_at'])->format('d/m/Y') }}.</p>@endif
-            @else
-                <p class="muted" style="margin:0 0 12px">Nenhuma assinatura encontrada para esta empresa.</p>
-            @endif
-            <div class="actions" style="flex-wrap:wrap;margin-top:14px">
-                <a class="btn secondary" href="{{ route('subscription.status') }}">Ver dados e op&ccedil;&otilde;es</a>
-                @if($upgradeAvailable)<form method="post" action="{{ route('subscription.checkout') }}">@csrf<input type="hidden" name="plan_code" value="comercio-cloud-equipe"><button class="btn" type="submit">Upgrade para Equipe</button></form>@endif
-                @if($renewalAvailable)<form method="post" action="{{ route('subscription.checkout') }}">@csrf<input type="hidden" name="plan_code" value="{{ $renewalPlan->code }}"><button class="btn" type="submit">Renovar</button></form>@endif
-            </div>
-            @if($subscription && ! $canManageSubscription)<p class="muted" style="margin:10px 0 0">Para alterar ou renovar o plano, solicite ao administrador da empresa.</p>@endif
-        </section>
-        <section class="company" style="display:block;margin:0;background:#f8fbff">
-            <h2 style="margin:0 0 12px;color:#102c4d;font-size:19px">Precisa de suporte?</h2>
-            <p class="muted" style="margin:0 0 12px">Fale com a equipe da RMC Sites se encontrar um problema ou tiver d&uacute;vidas.</p>
-            <div style="display:flex;flex-wrap:wrap;gap:14px">
-                @if($supportEmail)<a href="mailto:{{ $supportEmail }}">{{ $supportEmail }}</a>@endif
-                @if($supportWhatsapp)<a href="https://wa.me/{{ preg_replace('/\D+/', '', $supportWhatsapp) }}" target="_blank" rel="noopener">WhatsApp: {{ $supportWhatsapp }}</a>@endif
-            </div>
-        </section>
-    </div>
-</section>
 <section class="card dashboard-card">
     <p class="muted" style="margin-bottom:8px">PAINEL DA EMPRESA</p>
     <h1 class="title">{{ $company->trade_name }}</h1>
@@ -46,5 +16,45 @@
     </div>
     <div class="dashboard-nav"><a class="btn" href="{{ route('customers.index') }}">Clientes</a><a class="btn" href="{{ route('products.index') }}">Produtos / peças</a><a class="btn" href="{{ route('sales.index') }}">PDV / Vendas</a><a class="btn" href="{{ route('cash.index') }}">Caixa</a>@if($role === 'Administrador')<a class="btn" href="{{ route('categories.index') }}">Categorias</a><a class="btn" href="{{ route('receivables.index') }}">Contas a receber</a><a class="btn" href="{{ route('payables.index') }}">Contas a pagar</a><a class="btn" href="{{ route('financial.summary') }}">Resumo financeiro</a><a class="btn" href="{{ route('reports.index') }}">Relatorios</a><a class="btn" href="{{ route('debtors.index') }}">Devedores</a><a class="btn" href="{{ route('suppliers.index') }}">Fornecedores</a><a class="btn" href="{{ route('purchases.index') }}">Compras</a><a class="btn secondary" href="{{ route('company.settings.edit') }}">Configurações</a>@endif<a class="btn secondary" href="{{ route('companies.index') }}">Trocar empresa</a><form method="post" action="{{ route('logout') }}">@csrf<button class="btn secondary" type="submit">Sair</button></form></div>@endif
 </section>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:18px">
+    <details class="company" style="display:block;margin:0;padding:0;overflow:hidden;background:#0c3934;border-color:#17695e;color:#eafffa">
+        <summary style="cursor:pointer;list-style-position:inside;padding:16px 18px;font-weight:700">
+            Minha assinatura
+            <span style="display:block;font-size:13px;font-weight:400;color:#a8d6cd;margin-top:5px">{{ $subscription?->plan?->name ?? 'Consultar plano e validade' }} · {{ $subscriptionActive ? 'Ativa' : ($subscription?->current_period_end?->isPast() ? 'Vencida' : 'Ver situação') }}</span>
+        </summary>
+        <div style="padding:0 18px 18px">
+            @if($subscription)
+                <p style="margin:6px 0">Plano: <strong>{{ $subscription->plan?->name ?? 'N&atilde;o identificado' }}</strong></p>
+                <p style="margin:6px 0">Situa&ccedil;&atilde;o: <strong>{{ $subscriptionActive ? 'Ativa' : ($subscription->current_period_end?->isPast() ? 'Vencida' : ucfirst(str_replace('_', ' ', $subscription->status))) }}</strong></p>
+                @if($subscription->current_period_end)<p style="margin:6px 0">Vencimento: <strong>{{ $subscription->current_period_end->format('d/m/Y') }}</strong></p>@endif
+                @php($scheduledPlanChange = ($subscription->metadata ?? [])['scheduled_plan_change'] ?? null)
+                @if($scheduledPlanChange)<p style="margin:8px 0">Pr&oacute;xima troca: {{ $scheduledPlanChange['plan_code'] === 'comercio-cloud-essencial' ? 'Essencial' : $scheduledPlanChange['plan_code'] }} em {{ \Illuminate\Support\Carbon::parse($scheduledPlanChange['effective_at'])->format('d/m/Y') }}.</p>@endif
+            @else
+                <p>Nenhuma assinatura encontrada para esta empresa.</p>
+            @endif
+            <div class="actions" style="flex-wrap:wrap;margin-top:14px">
+                <a class="btn secondary" href="{{ route('subscription.status') }}">Ver dados e op&ccedil;&otilde;es</a>
+                @if($upgradeAvailable)<form method="post" action="{{ route('subscription.checkout') }}">@csrf<input type="hidden" name="plan_code" value="comercio-cloud-equipe"><button class="btn" type="submit">Upgrade para Equipe</button></form>@endif
+                @if($renewalAvailable)<form method="post" action="{{ route('subscription.checkout') }}">@csrf<input type="hidden" name="plan_code" value="{{ $renewalPlan->code }}"><button class="btn" type="submit">Renovar</button></form>@endif
+            </div>
+            @if($subscription && ! $canManageSubscription)<p style="margin:10px 0 0;color:#a8d6cd">Para alterar ou renovar o plano, solicite ao administrador da empresa.</p>@endif
+        </div>
+    </details>
+    <details class="company" style="display:block;margin:0;padding:0;overflow:hidden;background:#0c3934;border-color:#17695e;color:#eafffa">
+        <summary style="cursor:pointer;list-style-position:inside;padding:16px 18px;font-weight:700">
+            Precisa de suporte?
+            <span style="display:block;font-size:13px;font-weight:400;color:#a8d6cd;margin-top:5px">E-mail e WhatsApp da RMC Sites</span>
+        </summary>
+        <div style="padding:0 18px 18px">
+            <p style="margin:0 0 12px;color:#a8d6cd">Fale com a equipe da RMC Sites se encontrar um problema ou tiver d&uacute;vidas.</p>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+                @if($supportEmail)<a href="mailto:{{ $supportEmail }}" style="color:#eafffa">{{ $supportEmail }}</a>@endif
+                @if($supportWhatsapp)<a class="btn" href="https://wa.me/{{ preg_replace('/\D+/', '', $supportWhatsapp) }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#00c875;border-color:#00e58a;color:#052b24">
+                    <img src="{{ asset('images/whatsapp-icon.svg') }}" alt="" width="22" height="22" style="display:block">
+                    <span>Falar pelo WhatsApp</span>
+                </a>@endif
+            </div>
+        </div>
+    </details>
+</div>
 @endsection
-
