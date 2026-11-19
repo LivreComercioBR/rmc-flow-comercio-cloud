@@ -20,6 +20,35 @@ final class DashboardController extends Controller
         $company = $companyContext->company();
         abort_unless($company, 403);
         $role = CompanyMembership::query()->where('company_id', $company->id)->where('user_id', auth()->id())->where('status', 'active')->value('role');
+        $subscription = $company->currentSubscription();
+        $subscriptionActive = $subscription?->status === 'active' && $subscription->current_period_end?->isFuture();
+        $canManageSubscription = $role === 'Administrador';
+        $checkoutEnabled = (bool) config('services.mercado_pago.checkout_enabled');
+        $hasPriorApprovedPayment = $subscription?->paymentEvents()
+            ->whereIn('status', ['processed', 'awaiting_billing_policy'])
+            ->where('paid_amount_cents', '>', 0)
+            ->exists() ?? false;
+        $awaitingPaymentActivation = $subscription?->paymentEvents()
+            ->where('status', 'awaiting_billing_policy')
+            ->where('paid_amount_cents', '>', 0)
+            ->exists() ?? false;
+        $scheduledPlanId = ($subscription?->metadata ?? [])['scheduled_plan_change']['plan_id'] ?? null;
+        $renewalPlan = $scheduledPlanId && $subscription?->current_period_end?->isPast()
+            ? \App\Models\Plan::query()->whereKey((int) $scheduledPlanId)->where('active', true)->first()
+            : $subscription?->plan;
+        $renewalAvailable = $canManageSubscription
+            && $checkoutEnabled
+            && $hasPriorApprovedPayment
+            && ! $awaitingPaymentActivation
+            && $subscription?->current_period_end?->isPast()
+            && $renewalPlan !== null;
+        $upgradeAvailable = $canManageSubscription
+            && $checkoutEnabled
+            && $subscriptionActive
+            && $subscription?->plan?->code === 'comercio-cloud-essencial'
+            && ! $awaitingPaymentActivation;
+        $supportEmail = config('services.support.email');
+        $supportWhatsapp = config('services.support.whatsapp');
         $servicesEnabled = (bool) $company->modules()->where('module_key', 'services')->where('enabled', true)->exists();
         $canAccessServiceCatalog = $servicesEnabled && in_array($role, ['Administrador', 'Mecânico'], true);
         $customerCount = Customer::query()->where('company_id', $company->id)->where('status', 'active')->count();
@@ -35,7 +64,7 @@ final class DashboardController extends Controller
 
         $hideValues = (bool) $request->session()->get('dashboard.hide_values.'.$company->id, false);
 
-        return view('dashboard', compact('company', 'role', 'customerCount', 'productCount', 'lowStockCount', 'openPayableCents', 'overduePayables', 'openReceivableCents', 'overdueReceivables', 'openCashSession', 'cashBalanceCents', 'hideValues', 'servicesEnabled', 'canAccessServiceCatalog'));
+        return view('dashboard', compact('company', 'role', 'subscription', 'subscriptionActive', 'canManageSubscription', 'renewalPlan', 'renewalAvailable', 'upgradeAvailable', 'supportEmail', 'supportWhatsapp', 'customerCount', 'productCount', 'lowStockCount', 'openPayableCents', 'overduePayables', 'openReceivableCents', 'overdueReceivables', 'openCashSession', 'cashBalanceCents', 'hideValues', 'servicesEnabled', 'canAccessServiceCatalog'));
     }
 
     public function toggleValues(Request $request, CompanyContext $companyContext): RedirectResponse
