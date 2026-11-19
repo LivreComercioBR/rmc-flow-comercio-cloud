@@ -90,11 +90,18 @@ final class SubscriptionCheckoutController extends Controller
             ->whereIn('status', ['processed', 'awaiting_billing_policy'])
             ->where('paid_amount_cents', '>', 0)
             ->exists() ?? false;
+        $awaitingPaymentActivation = $subscription?->paymentEvents()
+            ->where('status', 'awaiting_billing_policy')
+            ->where('paid_amount_cents', '>', 0)
+            ->exists() ?? false;
+        if ($awaitingPaymentActivation) {
+            throw ValidationException::withMessages(['checkout' => 'Há um pagamento aprovado aguardando ativação. Aguarde a conclusão antes de iniciar outra cobrança.']);
+        }
+
         if ($hasPriorApprovedPayment && $subscription?->plan) {
             $plan = $subscription->plan;
             $scheduledPlanCode = ($subscription->metadata ?? [])['scheduled_plan_change']['plan_code'] ?? null;
-            $isScheduledRenewalSelection = $subscription->current_period_end?->isPast()
-                && $scheduledPlanCode !== null
+            $isScheduledRenewalSelection = $scheduledPlanCode !== null
                 && ($selection['plan_code'] ?? $scheduledPlanCode) === $scheduledPlanCode;
             if ($subscription->status === 'active' && $subscription->current_period_end?->isFuture() && ($selection['plan_code'] ?? null) === 'comercio-cloud-equipe' && $plan->code === 'comercio-cloud-essencial') {
                 $this->authorizePlanChange($request, $company->id);
@@ -105,7 +112,7 @@ final class SubscriptionCheckoutController extends Controller
             } elseif (! empty($selection['plan_code']) && $selection['plan_code'] !== $plan->code && ! $isScheduledRenewalSelection) {
                 throw ValidationException::withMessages(['checkout' => 'O plano de uma assinatura ativa só pode ser alterado pelo fluxo de upgrade ou na renovação.']);
             }
-            if (! $upgradePlan && $subscription->current_period_end?->isPast() && isset(($subscription->metadata ?? [])['scheduled_plan_change']['plan_id'])) {
+            if (! $upgradePlan && $isScheduledRenewalSelection && isset(($subscription->metadata ?? [])['scheduled_plan_change']['plan_id'])) {
                 $scheduledId = (int) $subscription->metadata['scheduled_plan_change']['plan_id'];
                 $plan = Plan::query()->whereKey($scheduledId)->where('active', true)->firstOrFail();
             }
@@ -125,9 +132,9 @@ final class SubscriptionCheckoutController extends Controller
                 $subscription->setRelation('plan', $plan);
             }
         }
-        if (! $upgradePlan && $subscription?->status === 'active' && $subscription->current_period_end?->isFuture()) {
+        if (! $upgradePlan && $subscription?->status === 'active' && $subscription->current_period_end?->isFuture() && ! $hasPriorApprovedPayment) {
             return redirect()->route('subscription.status')->withErrors([
-                'checkout' => 'A assinatura está ativa até '.$subscription->current_period_end->format('d/m/Y').'. A renovação ficará disponível após o encerramento da vigência.',
+                'checkout' => 'Esta assinatura ainda não possui um pagamento aprovado que permita gerar a renovação antecipada.',
             ]);
         }
 
