@@ -1,7 +1,7 @@
 @extends('layouts.app', ['title' => 'Dados da empresa | RMC Flow Comércio Cloud'])
 @section('content')
 <section class="card">
-    <div class="actions" style="justify-content:space-between;flex-wrap:wrap"><div><p class="muted" style="margin-bottom:8px">CONFIGURAÇÕES</p><h1 class="title">Dados da empresa</h1><p class="muted">Essas informações podem ser usadas em documentos e relatórios.</p></div><div class="actions"><a class="btn secondary" href="{{ route('company.users.index') }}">Usuários</a><a class="btn secondary" href="{{ route('company.audit.index') }}">Auditoria</a><a class="btn secondary" href="{{ route('dashboard') }}">Voltar ao painel</a></div></div>
+    <div class="actions" style="justify-content:space-between;flex-wrap:wrap"><div><p class="muted" style="margin-bottom:8px">CONFIGURAÇÕES</p><h1 class="title">Dados da empresa</h1><p class="muted">Essas informações podem ser usadas em documentos e relatórios.</p></div><div class="actions"><a class="btn secondary" href="{{ route('company.users.index') }}">Usuários</a><a class="btn secondary" href="{{ route('company.backup.index') }}">Backup</a><a class="btn secondary" href="{{ route('company.audit.index') }}">Auditoria</a><a class="btn secondary" href="{{ route('dashboard') }}">Voltar ao painel</a></div></div>
     @if(session('settings_notice'))<div class="alert alert-success" role="status">{{ session('settings_notice') }}</div>@endif
     @if(session('module_notice'))<div class="alert alert-success" role="status">{{ session('module_notice') }}</div>@endif
     <form method="post" action="{{ route('company.settings.update') }}">@csrf @method('PUT')
