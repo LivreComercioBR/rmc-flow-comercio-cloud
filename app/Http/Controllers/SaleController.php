@@ -60,8 +60,10 @@ final class SaleController extends Controller
         return redirect()->route('sales.show', $sale)->with('sale_notice', 'Venda #'.$sale->sale_number.' registrada.');
     }
 
-    public function show(Sale $sale): View
+    public function show(int $sale, CompanyContext $context): View
     {
+        abort_unless($context->id(), 403);
+        $sale = Sale::query()->findOrFail($sale);
         $sale->load(['customer', 'items', 'payments', 'receivables.payments', 'refunds.creator', 'refunds.approver', 'cancelledBy', 'cancellationApprover']);
         $methodNames = ['cash' => 'Dinheiro', 'pix' => 'PIX', 'debit_card' => 'Cartão de débito', 'credit_card' => 'Cartão de crédito', 'bank_transfer' => 'Transferência', 'other' => 'Outro'];
         $received = $sale->payments->groupBy('payment_method')->map(fn ($items) => (int) $items->sum('amount_cents'));
