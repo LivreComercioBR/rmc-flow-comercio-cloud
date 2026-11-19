@@ -23,7 +23,7 @@ final class EnsureCompanyContext
             ->with('company')
             ->first();
 
-        abort_unless($membership && $membership->company, Response::HTTP_FORBIDDEN);
+        if (! $membership || ! $membership->company) {\n            return redirect()->route('companies.index');\n        }
         app(CompanyContext::class)->set($membership->company);
 
         $hasActiveSubscription = $membership->company->subscriptions()
