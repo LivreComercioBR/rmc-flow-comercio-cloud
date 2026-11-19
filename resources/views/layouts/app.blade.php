@@ -11,7 +11,7 @@
     </style>
 </head>
 <body>
-<header class="top"><a class="brand" href="{{ auth()->check() ? route('companies.index') : route('checkout.plans') }}">RMC Flow Comércio Cloud</a>@auth<div class="actions"><a href="{{ request()->routeIs('dashboard') ? route('company.settings.edit') : route('dashboard') }}" style="color:#d9f7fb;text-decoration:none">{{ request()->routeIs('dashboard') ? 'Dados da empresa' : 'Painel' }}</a><small>{{ auth()->user()->name }}</small></div>@endauth</header>
+<header class="top"><a class="brand" href="{{ auth()->check() ? route('companies.index') : route('checkout.plans') }}">RMC Flow Comércio Cloud</a>@auth<div class="actions"><a href="{{ request()->routeIs('dashboard') ? route('company.settings.edit') : route('dashboard') }}" style="color:#d9f7fb;text-decoration:none">{{ request()->routeIs('dashboard') ? 'Dados da empresa' : 'Painel' }}</a><a href="{{ route('account.password.edit') }}" style="color:#d9f7fb;text-decoration:none">Minha senha</a><form method="post" action="{{ route('logout') }}" style="margin:0">@csrf<button class="btn secondary" type="submit" style="min-height:34px;padding:4px 12px">Sair</button></form><small>{{ auth()->user()->name }}</small></div>@endauth</header>
 <main class="container">@yield('content')</main>
 <footer class="footer">RMC Sites · Gestão comercial online</footer>
 </body>
