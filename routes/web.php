@@ -24,6 +24,7 @@ use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CompanyModuleController;
 use App\Http\Controllers\CompanyUserController;
 use App\Http\Controllers\CompanyAuditController;
+use App\Http\Controllers\CompanyBackupController;
 use App\Http\Controllers\CompanyInvitationController;
 use App\Http\Controllers\ServiceCatalogController;
 use App\Http\Controllers\ServiceAppointmentController;
@@ -34,6 +35,7 @@ use App\Http\Controllers\ServiceAssetController;
 use App\Http\Controllers\Auth\CompanyRegistrationController;
 use App\Http\Controllers\Auth\ChangeUnverifiedEmailController;
 use App\Http\Controllers\Auth\SessionController;
+use App\Http\Controllers\Auth\AccountPasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Middleware\EnsureCompanyContextForBilling;
@@ -93,6 +95,8 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [SessionController::class, 'destroy'])->name('logout');
+    Route::get('/minha-senha', [AccountPasswordController::class, 'edit'])->name('account.password.edit');
+    Route::put('/minha-senha', [AccountPasswordController::class, 'update'])->name('account.password.update');
     Route::get('/empresas', [CompanySelectionController::class, 'index'])->name('companies.index');
     Route::post('/empresas/{company}/ativar', [CompanySelectionController::class, 'activate'])->whereNumber('company')->name('companies.activate');
     Route::get('/assinatura', SubscriptionStatusController::class)->middleware(EnsureCompanyContextForBilling::class)->name('subscription.status');
@@ -106,6 +110,9 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/dashboard/alternar-valores', [DashboardController::class, 'toggleValues'])->name('dashboard.values.toggle');
         Route::get('/configuracoes/empresa', [CompanySettingsController::class, 'edit'])->name('company.settings.edit');
         Route::put('/configuracoes/empresa', [CompanySettingsController::class, 'update'])->name('company.settings.update');
+        Route::get('/configuracoes/backup', [CompanyBackupController::class, 'index'])->name('company.backup.index');
+        Route::get('/configuracoes/backup/baixar', [CompanyBackupController::class, 'download'])->name('company.backup.download');
+        Route::post('/configuracoes/backup/restaurar', [CompanyBackupController::class, 'restore'])->middleware('throttle:3,1')->name('company.backup.restore');
         Route::put('/configuracoes/modulos', [CompanyModuleController::class, 'update'])->name('company.modules.update');
         Route::get('/configuracoes/usuarios', [CompanyUserController::class, 'index'])->name('company.users.index');
         Route::patch('/configuracoes/usuarios/{membership}', [CompanyUserController::class, 'update'])->whereNumber('membership')->name('company.users.update');
