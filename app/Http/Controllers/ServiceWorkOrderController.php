@@ -61,7 +61,8 @@ final class ServiceWorkOrderController extends Controller
             })
             ->orderByDesc('work_order_number')->paginate(20)->withQueryString();
 
-        return view('services.work-orders.index', ['orders' => $orders, 'filters' => $filters, 'search' => $search, 'statuses' => self::STATUSES, 'today' => $today]);
+        $role = $request->user()->companyMemberships()->where('company_id', $context->id())->where('status', 'active')->value('role');
+        return view('services.work-orders.index', ['orders' => $orders, 'filters' => $filters, 'search' => $search, 'statuses' => self::STATUSES, 'today' => $today, 'role' => $role]);
     }
 
     public function show(int $workOrder, CompanyContext $context): View
@@ -84,7 +85,7 @@ final class ServiceWorkOrderController extends Controller
         if (! is_array($address)) $address = [];
         $addressText = implode(', ', array_filter([$address['street'] ?? null, $address['number'] ?? null, $address['district'] ?? null, $address['city'] ?? null, $address['state'] ?? null, $address['postal_code'] ?? null]));
         $order->load(['receivable.payments.creator', 'refunds.creator', 'refunds.approver', 'cancelledBy', 'cancellationApprover']);
-        $cashSessionOpen = CashSession::query()->where('status', 'open')->where('opened_by', $request->user()->id)->exists();
+        $cashSessionOpen = CashSession::query()->where('status', 'open')->where('opened_by', auth()->id())->exists();
         $role = CompanyMembership::query()->where('company_id', $context->id())->where('user_id', auth()->id())->where('status', 'active')->value('role');
         $receivedByMethod = AccountReceivablePayment::query()->whereHas('receivable', fn ($query) => $query->where('service_work_order_id', $order->id))
             ->selectRaw('payment_method, SUM(amount_cents) as total_cents')->groupBy('payment_method')->pluck('total_cents', 'payment_method');
