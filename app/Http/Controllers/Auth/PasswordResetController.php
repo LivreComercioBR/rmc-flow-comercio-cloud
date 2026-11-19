@@ -39,11 +39,15 @@ final class PasswordResetController extends Controller
                 ->onlyInput('email');
         }
 
-        if ($status !== Password::RESET_LINK_SENT) {
-            Log::notice('Password reset link was not sent.', [
-                'broker_status' => $status,
-                'email_hash' => hash('sha256', $data['email']),
-            ]);
+        $logContext = [
+            'broker_status' => $status,
+            'email_hash' => hash('sha256', $data['email']),
+        ];
+
+        if ($status === Password::RESET_LINK_SENT) {
+            Log::info('Password reset request accepted by the mail transport.', $logContext);
+        } else {
+            Log::notice('Password reset link was not sent.', $logContext);
         }
 
         // Keep the same success response for existing and unknown addresses to prevent account discovery.
