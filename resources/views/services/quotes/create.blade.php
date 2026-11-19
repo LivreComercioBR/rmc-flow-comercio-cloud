@@ -111,6 +111,7 @@
                     source.selectedIndex = [...source.options].indexOf(option);
                     sourceValue.value = option.value;
                     search.value = option.textContent.trim();
+                    search.setCustomValidity('');
                     results.style.display = 'none';
                     recalculate();
                 };
@@ -142,7 +143,7 @@
             const button = document.createElement('button');
             button.type = 'button'; button.textContent = option.textContent.trim();
             button.style.cssText = 'display:block;width:100%;text-align:left;padding:9px 12px;border:0;background:white;cursor:pointer';
-            button.addEventListener('click', () => { customerSelect.value = option.value; customerSearch.value = option.textContent.trim(); customerResults.style.display = 'none'; });
+            button.addEventListener('click', () => { customerSelect.value = option.value; customerSearch.value = option.textContent.trim(); customerSearch.setCustomValidity(''); customerResults.style.display = 'none'; });
             customerResults.appendChild(button);
         });
         customerResults.style.display = matches.length ? 'block' : 'none';
