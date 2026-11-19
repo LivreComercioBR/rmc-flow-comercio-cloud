@@ -1,6 +1,13 @@
 @extends('layouts.app', ['title' => 'Venda #'.$sale->sale_number.' | RMC Flow Comércio Cloud'])
 @section('content')
 <section class="card">
+    <div style="max-width:950px;margin:0 auto 22px;border-bottom:2px solid #102c4d;padding-bottom:16px">
+        <h2 style="margin:0 0 8px">{{ $company->trade_name }}</h2>
+        @if ($company->legal_name)<div>{{ $company->legal_name }}</div>@endif
+        @if ($company->document)<div>Documento: {{ $company->document }}</div>@endif
+        @if ($company->phone)<div>Telefone: {{ $company->phone }}</div>@endif
+        @if ($addressText !== '')<div>{{ $addressText }}</div>@endif
+    </div>
     @if (session('sale_notice'))<div class="alert alert-success">{{ session('sale_notice') }}</div>@endif
     @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
     <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap"><div><p class="muted">VENDA</p><h1 class="title">Venda #{{ $sale->sale_number }} @if($sale->status === 'cancelled')<span style="color:#b42318">(Cancelada)</span>@endif</h1><p class="muted">{{ $sale->sold_at->format('d/m/Y H:i') }} · {{ $sale->customer?->name ?? 'Consumidor' }}</p></div><div class="actions"><a class="btn secondary" href="{{ route('sales.index') }}">Voltar às vendas</a><a class="btn" href="{{ route('sales.create') }}">Nova venda</a></div></div>
