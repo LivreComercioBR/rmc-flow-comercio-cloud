@@ -20,7 +20,7 @@
             @foreach($formItems as $i => $item)
             <div class="company quote-item" style="display:block;margin:0">
                 <div class="grid">
-                    <div class="field"><label>Tipo</label><select name="items[{{ $i }}][item_type]" data-item-type style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"><option value="service" @selected(($item['item_type'] ?? '') === 'service')>Serviço do catálogo</option><option value="product" @selected(($item['item_type'] ?? '') === 'product')>Produto / peça</option><option value="manual" @selected(($item['item_type'] ?? '') === 'manual')>Item manual</option></select></div>
+                    <div class="field"><label>Tipo</label><input type="hidden" name="items[{{ $i }}][item_type]" data-item-type-value value="{{ $item['item_type'] ?? 'service' }}"><select data-item-type style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"><option value="service" @selected(($item['item_type'] ?? '') === 'service')>Serviço do catálogo</option><option value="product" @selected(($item['item_type'] ?? '') === 'product')>Produto / peça</option><option value="manual" @selected(($item['item_type'] ?? '') === 'manual')>Item manual</option></select></div>
                     <div class="field" data-source-wrap><label>Buscar serviço ou produto</label><input type="search" data-source-search autocomplete="off" placeholder="Digite para buscar no catálogo" style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"><div data-source-results style="position:relative;z-index:4;background:white;border:1px solid #cbd5e1;border-radius:8px;max-height:220px;overflow:auto;display:none"></div><input type="hidden" name="items[{{ $i }}][source_id]" data-source-value><select data-source-id hidden><option value="">Selecione</option><optgroup label="Serviços" data-kind="service">@foreach($services as $service)<option value="{{ $service->id }}" data-price="{{ number_format($service->price_cents / 100, 2, '.', '') }}" data-search="{{ mb_strtolower($service->name.' '.$service->description) }}" @selected(($item['item_type'] ?? '') === 'service' && (string)($item['source_id'] ?? '') === (string)$service->id)>{{ $service->name }} — R$ {{ number_format($service->price_cents / 100, 2, ',', '.') }}</option>@endforeach</optgroup><optgroup label="Produtos / peças" data-kind="product">@foreach($products as $product)<option value="{{ $product->id }}" data-price="{{ number_format($product->sale_price_cents / 100, 2, '.', '') }}" data-search="{{ mb_strtolower($product->name.' '.$product->sku.' '.$product->barcode) }}" @selected(($item['item_type'] ?? '') === 'product' && (string)($item['source_id'] ?? '') === (string)$product->id)>{{ $product->name }} — R$ {{ number_format($product->sale_price_cents / 100, 2, ',', '.') }}</option>@endforeach</optgroup></select></div>
                     <div class="field" data-manual-wrap><label>Nome do item manual</label><input name="items[{{ $i }}][name]" maxlength="180" value="{{ $item['name'] ?? '' }}"></div>
                     <div class="field"><label>Quantidade</label><input name="items[{{ $i }}][quantity]" type="number" min="0.001" max="100000" step="0.001" required value="{{ $item['quantity'] ?? '1.000' }}"></div>
@@ -32,7 +32,7 @@
             @endforeach
         </div>
         <template id="quote-item-template"><div class="company quote-item" style="display:block;margin:0"><div class="grid">
-            <div class="field"><label>Tipo</label><select name="items[__INDEX__][item_type]" data-item-type style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"><option value="service">Serviço do catálogo</option><option value="product">Produto / peça</option><option value="manual">Item manual</option></select></div>
+            <div class="field"><label>Tipo</label><input type="hidden" name="items[__INDEX__][item_type]" data-item-type-value value="service"><select data-item-type style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"><option value="service">Serviço do catálogo</option><option value="product">Produto / peça</option><option value="manual">Item manual</option></select></div>
             <div class="field" data-source-wrap><label>Buscar serviço ou produto</label><input type="search" data-source-search autocomplete="off" placeholder="Digite para buscar no catálogo" style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font:inherit"><div data-source-results style="position:relative;z-index:4;background:white;border:1px solid #cbd5e1;border-radius:8px;max-height:220px;overflow:auto;display:none"></div><input type="hidden" name="items[__INDEX__][source_id]" data-source-value><select data-source-id hidden><option value="">Selecione</option><optgroup label="Serviços" data-kind="service">@foreach($services as $service)<option value="{{ $service->id }}" data-price="{{ number_format($service->price_cents / 100, 2, '.', '') }}" data-search="{{ mb_strtolower($service->name.' '.$service->description) }}">{{ $service->name }} — R$ {{ number_format($service->price_cents / 100, 2, ',', '.') }}</option>@endforeach</optgroup><optgroup label="Produtos / peças" data-kind="product">@foreach($products as $product)<option value="{{ $product->id }}" data-price="{{ number_format($product->sale_price_cents / 100, 2, '.', '') }}" data-search="{{ mb_strtolower($product->name.' '.$product->sku.' '.$product->barcode) }}">{{ $product->name }} — R$ {{ number_format($product->sale_price_cents / 100, 2, ',', '.') }}</option>@endforeach</optgroup></select></div>
             <div class="field" data-manual-wrap><label>Nome do item manual</label><input name="items[__INDEX__][name]" maxlength="180"></div>
             <div class="field"><label>Quantidade</label><input name="items[__INDEX__][quantity]" type="number" min="0.001" max="100000" step="0.001" required value="1.000"></div>
@@ -121,7 +121,7 @@
             });
             results.style.display = options.length ? 'block' : 'none';
         };
-        type.addEventListener('change', () => { source.value = ''; sourceValue.value = ''; search.value = ''; sync(row); });
+        type.addEventListener('change', () => { row.querySelector('[data-item-type-value]').value = type.value; source.value = ''; sourceValue.value = ''; search.value = ''; sync(row); });
         search.addEventListener('input', renderResults);
         search.addEventListener('focus', renderResults);
         source.addEventListener('change', recalculate);
@@ -161,7 +161,9 @@
         }
         customerSearch.setCustomValidity('');
         for (const row of list.querySelectorAll('.quote-item')) {
-            const type = row.querySelector('[data-item-type]').value;
+            const typeSelect = row.querySelector('[data-item-type]');
+            const type = typeSelect.value;
+            row.querySelector('[data-item-type-value]').value = type;
             if (type === 'manual') continue;
             const select = row.querySelector('[data-source-id]');
             const selected = [...select.options].find((option) => option.selected && option.parentElement?.dataset.kind === type && option.value);
