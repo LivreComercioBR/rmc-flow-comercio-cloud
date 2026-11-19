@@ -194,8 +194,8 @@ final class ServiceQuoteController extends Controller
         $company = $context->company();
         abort_unless($company, 403);
         $record = ServiceQuote::query()->with(['customer', 'appointment', 'items', 'creator', 'decisionMaker', 'workOrder'])->findOrFail($quote);
-        $settings = $company->settings()->whereIn('setting_key', ['company.address'])->pluck('setting_value', 'setting_key');
-        $address = $settings->get('company.address') ?? [];
+        $address = $company->settings()->where('setting_key', 'company.address')->first()?->setting_value ?? [];
+        if (! is_array($address)) $address = [];
         $addressText = implode(', ', array_filter([$address['street'] ?? null, $address['number'] ?? null, $address['district'] ?? null, $address['city'] ?? null, $address['state'] ?? null, $address['postal_code'] ?? null]));
         $whatsappText = "Orçamento #{$record->quote_number} - {$company->trade_name}\nCliente: {$record->customer->name}\nValidade: {$record->expires_at->format('d/m/Y')}\n";
         foreach ($record->items as $item) $whatsappText .= "\n{$item->name} | ".number_format((float) $item->quantity, 3, ',', '.')." x R$ ".number_format($item->unit_price_cents / 100, 2, ',', '.')." = R$ ".number_format($item->total_cents / 100, 2, ',', '.');
