@@ -58,8 +58,10 @@ final class SubscriptionStatusController extends Controller
         $canCheckout = (bool) config('services.mercado_pago.checkout_enabled') && ! $awaitingActivation;
         $availablePlans = Plan::query()->where('active', true)->orderBy('initial_price_cents')->get();
         $scheduledPlanId = ($subscription?->metadata ?? [])['scheduled_plan_change']['plan_id'] ?? null;
-        $renewalPlan = $hasPriorPayment && $subscription?->current_period_end?->isPast() && $scheduledPlanId
-            ? $availablePlans->firstWhere('id', (int) $scheduledPlanId)
+        $renewalPlan = $hasPriorPayment && $subscription?->plan
+            ? ($scheduledPlanId
+                ? ($availablePlans->firstWhere('id', (int) $scheduledPlanId) ?? $subscription->plan)
+                : $subscription->plan)
             : null;
         $checkoutPlans = $hasPriorPayment && $subscription?->plan ? collect([$renewalPlan ?? $subscription->plan]) : $availablePlans;
         $canRetryPanelSync = $company->memberships()
@@ -68,6 +70,7 @@ final class SubscriptionStatusController extends Controller
             ->where('role', 'Administrador')
             ->exists();
         $canManagePlan = $company->memberships()->where('user_id', $request->user()->id)->where('status', 'active')->where('role', 'Administrador')->exists();
+        $renewalAvailable = $canManagePlan && $canCheckout && $hasPriorPayment && $renewalPlan !== null;
         $upgradeQuoteCents = null;
         $teamPlan = $availablePlans->firstWhere('code', 'comercio-cloud-equipe');
         if ($active && $canManagePlan && $canCheckout && $subscription?->plan?->code === 'comercio-cloud-essencial' && $teamPlan) {
@@ -86,7 +89,7 @@ final class SubscriptionStatusController extends Controller
             if ($upgradeQuoteCents < 1) $upgradeQuoteCents = null;
         }
 
-        return view('subscription.status', compact('company', 'subscription', 'active', 'paymentEvents', 'hasPriorPayment', 'awaitingActivation', 'paymentNotice', 'canCheckout', 'availablePlans', 'checkoutPlans', 'panelSyncEvent', 'panelRetryAvailable', 'panelSyncConfigurationMissing', 'lastPanelSync', 'canRetryPanelSync', 'canManagePlan', 'upgradeQuoteCents'));
+        return view('subscription.status', compact('company', 'subscription', 'active', 'paymentEvents', 'hasPriorPayment', 'awaitingActivation', 'paymentNotice', 'canCheckout', 'availablePlans', 'checkoutPlans', 'panelSyncEvent', 'panelRetryAvailable', 'panelSyncConfigurationMissing', 'lastPanelSync', 'canRetryPanelSync', 'canManagePlan', 'renewalAvailable', 'renewalPlan', 'upgradeQuoteCents'));
     }
 
     private function presentPaymentEvent(\App\Models\PaymentEvent $event): \App\Models\PaymentEvent
