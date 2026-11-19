@@ -2,7 +2,7 @@
 
 @section('content')
 <section class="card">
-    <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+    <div class="no-print" style="max-width:950px;margin:0 auto 22px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
         <div>
             <h1 class="title">Ordem de serviço #{{ str_pad((string) $order->work_order_number, 5, '0', STR_PAD_LEFT) }}</h1>
         </div>
