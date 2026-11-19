@@ -62,8 +62,12 @@ final class SaleController extends Controller
 
     public function show(int $sale, CompanyContext $context): View
     {
-        abort_unless($context->id(), 403);
-        $sale = Sale::query()->findOrFail($sale);
+        $company = $context->company();
+        abort_unless($company, 403);
+        $sale = Sale::query()->where('company_id', $company->id)->findOrFail($sale);
+        $address = $company->settings()->where('setting_key', 'company.address')->first()?->setting_value ?? [];
+        if (! is_array($address)) $address = [];
+        $addressText = implode(', ', array_filter([$address['street'] ?? null, $address['number'] ?? null, $address['district'] ?? null, $address['city'] ?? null, $address['state'] ?? null, $address['postal_code'] ?? null]));
         $sale->load(['customer', 'items', 'payments', 'receivables.payments', 'refunds.creator', 'refunds.approver', 'cancelledBy', 'cancellationApprover']);
         $methodNames = ['cash' => 'Dinheiro', 'pix' => 'PIX', 'debit_card' => 'Cartão de débito', 'credit_card' => 'Cartão de crédito', 'bank_transfer' => 'Transferência', 'other' => 'Outro'];
         $received = $sale->payments->groupBy('payment_method')->map(fn ($items) => (int) $items->sum('amount_cents'));
@@ -75,7 +79,7 @@ final class SaleController extends Controller
 
         $cashSessionOpen = CashSession::query()->where('status', 'open')->exists();
         if (! $cashSessionOpen) $refundOptions = $refundOptions->except('cash');
-        return view('sales.show', ['sale' => $sale, 'refundOptions' => $refundOptions, 'cashSessionOpen' => $cashSessionOpen, 'refundRequestKey' => (string) Str::uuid(), 'role' => request()->user()->companyMemberships()->where('company_id', app(CompanyContext::class)->id())->where('status', 'active')->value('role')]);
+        return view('sales.show', ['sale' => $sale, 'company' => $company, 'addressText' => $addressText, 'refundOptions' => $refundOptions, 'cashSessionOpen' => $cashSessionOpen, 'refundRequestKey' => (string) Str::uuid(), 'role' => request()->user()->companyMemberships()->where('company_id', app(CompanyContext::class)->id())->where('status', 'active')->value('role')]);
     }
 
     public function cancel(Request $request, Sale $sale, SaleService $sales): RedirectResponse
