@@ -16,7 +16,9 @@ final class EnsureCompanyContextForBilling
         $companyId = $request->session()->get('active_company_id');
         $membership = $user->companyMemberships()->where('status', 'active')->where('company_id', $companyId)
             ->whereHas('company', fn ($query) => $query->where('status', 'active'))->with('company')->first();
-        if (! $membership || ! $membership->company) {\n            return redirect()->route('companies.index');\n        }
+        if (! $membership || ! $membership->company) {
+            return redirect()->route('companies.index');
+        }
         app(CompanyContext::class)->set($membership->company);
         return $next($request);
     }
