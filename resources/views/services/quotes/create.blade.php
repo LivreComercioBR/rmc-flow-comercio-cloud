@@ -151,6 +151,32 @@
     customerSearch.addEventListener('input', () => { customerSelect.value = ''; renderCustomers(); });
     customerSearch.addEventListener('focus', renderCustomers);
     document.addEventListener('click', (event) => { if (!customerResults.contains(event.target) && event.target !== customerSearch) customerResults.style.display = 'none'; });
+    document.getElementById('quote-form').addEventListener('submit', (event) => {
+        if (!customerSelect.value) {
+            event.preventDefault();
+            customerSearch.setCustomValidity('Selecione um cliente na lista de resultados.');
+            customerSearch.reportValidity();
+            return;
+        }
+        customerSearch.setCustomValidity('');
+        for (const row of list.querySelectorAll('.quote-item')) {
+            const type = row.querySelector('[data-item-type]').value;
+            if (type === 'manual') continue;
+            const select = row.querySelector('[data-source-id]');
+            const selected = [...select.options].find((option) => option.selected && option.parentElement?.dataset.kind === type && option.value);
+            const search = row.querySelector('[data-source-search]');
+            if (!selected) {
+                event.preventDefault();
+                search.setCustomValidity('Escolha um item na lista de resultados.');
+                search.reportValidity();
+                return;
+            }
+            search.setCustomValidity('');
+            row.querySelector('[data-source-value]').value = selected.value;
+        }
+    });
+    customerSearch.addEventListener('input', () => customerSearch.setCustomValidity(''));
+    list.addEventListener('input', (event) => { if (event.target.matches('[data-source-search]')) event.target.setCustomValidity(''); });
     const indexes = Array.from(list.querySelectorAll('[name^="items["]')).map((field) => Number(field.name.match(/^items\[(\d+)\]/)?.[1] ?? -1));
     let nextIndex = Math.max(-1, ...indexes) + 1;
     list.querySelectorAll('.quote-item').forEach(attachRow);
