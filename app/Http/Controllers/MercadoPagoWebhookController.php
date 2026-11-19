@@ -42,7 +42,7 @@ final class MercadoPagoWebhookController extends Controller
             if (! $event) throw $exception;
         }
         $activationEnabled = (bool) config('services.mercado_pago.activate_approved_payments', false);
-        $reprocessableStatuses = ['received', 'failed', 'observed'];
+        $reprocessableStatuses = ['received', 'failed', 'observed', 'ignored'];
         if ($activationEnabled) {
             $reprocessableStatuses[] = 'awaiting_billing_policy';
         }
@@ -63,12 +63,38 @@ final class MercadoPagoWebhookController extends Controller
             if (str_starts_with($reference, 'purchase:')) {
                 return $this->processInitialPurchase($payment, $event, $dataId, $reference);
             }
-            $subscription = Subscription::where('provider', 'mercado_pago')->where('provider_reference', $reference)->first();
+            $paymentMetadata = is_array($payment['metadata'] ?? null) ? $payment['metadata'] : [];
+            $subscriptionId = (int) ($paymentMetadata['subscription_id'] ?? 0);
+            $companyId = (int) ($paymentMetadata['company_id'] ?? 0);
+            $subscription = null;
+
+            if ($subscriptionId > 0 && $companyId > 0) {
+                $subscription = Subscription::query()
+                    ->whereKey($subscriptionId)
+                    ->where('company_id', $companyId)
+                    ->where('provider', 'mercado_pago')
+                    ->first();
+            }
+
+            // Older subscriptions may store a purchase reference instead of company:{id}.
+            // The authenticated payment metadata identifies the stable subscription record.
+            if (! $subscription && $reference !== '') {
+                $subscription = Subscription::where('provider', 'mercado_pago')
+                    ->where('provider_reference', $reference)
+                    ->first();
+            }
+
             if (! $subscription) {
-                $event->update(['status' => 'ignored', 'processed_at' => now()]);
+                $event->update([
+                    'status' => 'ignored',
+                    'processed_at' => now(),
+                    'payload' => [
+                        'payment_id' => $dataId,
+                        'reason' => 'No Commerce Cloud subscription matched the payment metadata or external reference.',
+                    ],
+                ]);
                 return response()->json(['accepted' => true, 'ignored' => true]);
             }
-            $paymentMetadata = is_array($payment['metadata'] ?? null) ? $payment['metadata'] : [];
             $expectedProductCode = (string) config('services.subscription_panel.product_code', '');
             if ($expectedProductCode === ''
                 || (string) ($paymentMetadata['product_code'] ?? '') !== $expectedProductCode
@@ -83,7 +109,7 @@ final class MercadoPagoWebhookController extends Controller
             $outcome = DB::transaction(function () use ($subscription, $event, $eventId, $dataId, $payment): string {
                 $lockedSubscription = Subscription::query()->whereKey($subscription->id)->lockForUpdate()->with('plan')->firstOrFail();
                 $lockedEvent = PaymentEvent::query()->whereKey($event->id)->lockForUpdate()->firstOrFail();
-                $reprocessableStatuses = ['received', 'failed', 'observed'];
+                $reprocessableStatuses = ['received', 'failed', 'observed', 'ignored'];
                 if (config('services.mercado_pago.activate_approved_payments', false)) {
                     $reprocessableStatuses[] = 'awaiting_billing_policy';
                 }
