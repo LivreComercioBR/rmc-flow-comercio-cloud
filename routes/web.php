@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [SessionController::class, 'destroy'])->name('logout');
     Route::get('/minha-senha', [AccountPasswordController::class, 'edit'])->name('account.password.edit');
     Route::put('/minha-senha', [AccountPasswordController::class, 'update'])->name('account.password.update');
+    Route::patch('/minha-senha/email', [AccountPasswordController::class, 'updateEmail'])->middleware('throttle:5,1')->name('account.email.update');
     Route::get('/empresas', [CompanySelectionController::class, 'index'])->name('companies.index');
     Route::post('/empresas/{company}/ativar', [CompanySelectionController::class, 'activate'])->whereNumber('company')->name('companies.activate');
     Route::get('/assinatura', SubscriptionStatusController::class)->middleware(EnsureCompanyContextForBilling::class)->name('subscription.status');
