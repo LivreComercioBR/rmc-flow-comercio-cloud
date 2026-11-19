@@ -33,14 +33,13 @@ final class DashboardController extends Controller
             ->where('paid_amount_cents', '>', 0)
             ->exists() ?? false;
         $scheduledPlanId = ($subscription?->metadata ?? [])['scheduled_plan_change']['plan_id'] ?? null;
-        $renewalPlan = $scheduledPlanId && $subscription?->current_period_end?->isPast()
+        $renewalPlan = $scheduledPlanId
             ? \App\Models\Plan::query()->whereKey((int) $scheduledPlanId)->where('active', true)->first()
             : $subscription?->plan;
         $renewalAvailable = $canManageSubscription
             && $checkoutEnabled
             && $hasPriorApprovedPayment
             && ! $awaitingPaymentActivation
-            && $subscription?->current_period_end?->isPast()
             && $renewalPlan !== null;
         $upgradeAvailable = $canManageSubscription
             && $checkoutEnabled
