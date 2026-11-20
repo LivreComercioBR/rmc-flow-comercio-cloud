@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\PaymentEvent;
+use App\Models\LocalLicenseOrder;
 use App\Models\Subscription;
 use App\Models\SubscriptionCheckoutIntent;
 use App\Services\MercadoPago\MercadoPagoSignature;
+use App\Services\MercadoPago\LocalLicensePayment;
 use App\Services\MercadoPago\PaymentGateway;
 use App\Services\SubscriptionPanel\SubscriptionSnapshotSync;
 use Illuminate\Database\QueryException;
@@ -60,6 +62,11 @@ final class MercadoPagoWebhookController extends Controller
         try {
             $payment = $gateway->fetch($dataId);
             $reference = (string) ($payment['external_reference'] ?? '');
+            if (str_starts_with($reference, LocalLicenseOrder::REFERENCE_PREFIX)) {
+                app(LocalLicensePayment::class)->record($payment, $event, $dataId, $reference);
+
+                return response()->json(['accepted' => true]);
+            }
             if (str_starts_with($reference, 'purchase:')) {
                 return $this->processInitialPurchase($payment, $event, $dataId, $reference);
             }

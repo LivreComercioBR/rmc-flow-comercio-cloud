@@ -4,6 +4,7 @@ use App\Http\Controllers\CompanySelectionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SubscriptionStatusController;
 use App\Http\Controllers\MercadoPagoWebhookController;
+use App\Http\Controllers\LocalLicenseCheckoutController;
 use App\Http\Controllers\SubscriptionCheckoutController;
 use App\Http\Controllers\SubscriptionPurchaseController;
 use App\Http\Controllers\RetrySubscriptionPanelSyncController;
@@ -42,6 +43,9 @@ use App\Http\Middleware\EnsureCompanyContextForBilling;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [SubscriptionPurchaseController::class, 'plans'])->name('checkout.plans');
+Route::get('/edicao-local', [LocalLicenseCheckoutController::class, 'show'])->name('local-license.show');
+Route::post('/edicao-local', [LocalLicenseCheckoutController::class, 'start'])->middleware('throttle:5,1')->name('local-license.start');
+Route::get('/edicao-local/retorno/{token}', [LocalLicenseCheckoutController::class, 'returned'])->where('token', '[A-Za-z0-9]{64}')->name('local-license.return');
 Route::post('/mercado-pago/webhook', MercadoPagoWebhookController::class)->middleware('throttle:120,1')->name('mercado-pago.webhook');
 Route::get('/convites/{token}', [CompanyInvitationController::class, 'show'])->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:20,1')->name('company-invitations.show');
 Route::post('/convites/{token}', [CompanyInvitationController::class, 'accept'])->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:5,1')->name('company-invitations.accept');
