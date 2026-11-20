@@ -66,7 +66,7 @@ final class CompanySettingsController extends Controller
         $newLogoPath = null;
 
         if ($request->hasFile('logo')) {
-            $newLogoPath = $request->file('logo')->storePublicly('companies/'.$company->id.'/logos', 'public');
+            $newLogoPath = $request->file('logo')->storePublicly('companies/'.$company->id.'/logos', 'company_logos');
             if (! is_string($newLogoPath) || $newLogoPath === '') {
                 return back()->withErrors(['logo' => 'Não foi possível salvar a logo. Tente novamente.'])->withInput();
             }
@@ -95,11 +95,13 @@ final class CompanySettingsController extends Controller
             app(AuditTrailService::class)->record((int) $company->id, 'company.settings_updated', 'Dados comerciais da empresa atualizados.', (int) $request->user()->id, 'company', (int) $company->id, ['before' => $before, 'after' => $company->only(['legal_name', 'trade_name', 'document', 'email', 'phone']), 'address' => $address, 'activity' => trim($data['activity'] ?? ''), 'logo_action' => $logoAction]);
             });
         } catch (\Throwable $exception) {
-            if ($newLogoPath) Storage::disk('public')->delete($newLogoPath);
+            if ($newLogoPath) Storage::disk('company_logos')->delete($newLogoPath);
             throw $exception;
         }
 
         if ($logoChanged && $oldLogoPath && $oldLogoPath !== $newLogoPath) {
+            // Apaga tanto o armazenamento atual quanto o local legado do primeiro deploy.
+            Storage::disk('company_logos')->delete($oldLogoPath);
             Storage::disk('public')->delete($oldLogoPath);
         }
 
