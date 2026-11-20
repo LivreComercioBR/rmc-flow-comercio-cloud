@@ -208,7 +208,7 @@ final class ServiceQuoteController extends Controller
         $expired = $record->expires_at->lt(now($company->timezone)->startOfDay());
 
         $assets = ServiceAsset::query()->where('customer_id', $record->customer_id)->where('status', 'active')->orderBy('name')->get();
-        return view('services.quotes.show', ['quote' => $record, 'company' => $company, 'addressText' => $addressText, 'whatsappUrl' => $whatsappUrl, 'expired' => $expired, 'assets' => $assets]);
+        return view('services.quotes.show', ['quote' => $record, 'company' => $company, 'logoUrl' => $company->logoUrl(), 'addressText' => $addressText, 'whatsappUrl' => $whatsappUrl, 'expired' => $expired, 'assets' => $assets]);
     }
 
     public function markSent(int $quote, CompanyContext $context, AuditTrailService $audit): RedirectResponse

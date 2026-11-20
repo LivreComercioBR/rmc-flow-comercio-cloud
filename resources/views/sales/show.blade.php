@@ -3,7 +3,7 @@
 <style>@media print{body{background:#fff}.top,.footer,.no-print{display:none!important}.container{width:100%;max-width:none;margin:0}.card{border:0;box-shadow:none;padding:0}}</style>
 <section class="card">
     <div style="max-width:950px;margin:0 auto 22px;border-bottom:2px solid #102c4d;padding-bottom:16px;display:flex;align-items:center;gap:18px">
-        <img src="https://rmcsites.com.br/assets/brand/rmc-sites.png" alt="Logomarca da RMC Sites" style="width:82px;height:82px;object-fit:contain;flex:0 0 auto">
+        <div style="width:82px;height:82px;flex:0 0 auto;display:flex;align-items:center;justify-content:center">@if($logoUrl)<img src="{{ $logoUrl }}" alt="Logo de {{ $company->trade_name }}" style="width:100%;height:100%;object-fit:contain">@endif</div>
         <div>
             <h2 style="margin:0 0 8px">{{ $company->trade_name }}</h2>
             @if ($company->legal_name)<div>{{ $company->legal_name }}</div>@endif

@@ -90,7 +90,7 @@ final class SaleController extends Controller
         if (! in_array(strlen($phone), [12, 13], true)) $phone = '';
         $whatsappUrl = 'https://wa.me/'.($phone ?: '').'?text='.rawurlencode($whatsappText);
 
-        return view('sales.show', ['sale' => $sale, 'company' => $company, 'addressText' => $addressText, 'whatsappUrl' => $whatsappUrl, 'refundOptions' => $refundOptions, 'cashSessionOpen' => $cashSessionOpen, 'refundRequestKey' => (string) Str::uuid(), 'role' => request()->user()->companyMemberships()->where('company_id', app(CompanyContext::class)->id())->where('status', 'active')->value('role')]);
+        return view('sales.show', ['sale' => $sale, 'company' => $company, 'logoUrl' => $company->logoUrl(), 'addressText' => $addressText, 'whatsappUrl' => $whatsappUrl, 'refundOptions' => $refundOptions, 'cashSessionOpen' => $cashSessionOpen, 'refundRequestKey' => (string) Str::uuid(), 'role' => request()->user()->companyMemberships()->where('company_id', app(CompanyContext::class)->id())->where('status', 'active')->value('role')]);
     }
 
     public function cancel(Request $request, Sale $sale, SaleService $sales): RedirectResponse

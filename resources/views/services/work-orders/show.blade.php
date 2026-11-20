@@ -25,7 +25,7 @@
     <div style="max-width:950px;margin:22px auto">
         <div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-bottom:2px solid #102c4d;padding-bottom:16px">
             <div style="display:flex;align-items:center;gap:16px">
-                <img src="https://rmcsites.com.br/assets/brand/rmc-sites.png" alt="Logomarca da RMC Sites" style="width:76px;height:76px;object-fit:contain;flex:0 0 auto">
+                <div style="width:76px;height:76px;flex:0 0 auto;display:flex;align-items:center;justify-content:center">@if($logoUrl)<img src="{{ $logoUrl }}" alt="Logo de {{ $company->trade_name }}" style="width:100%;height:100%;object-fit:contain">@endif</div>
                 <div>
                     <h2 style="margin:0 0 8px">{{ $company->trade_name }}</h2>
                     <?php if ($company->legal_name) { ?><div>{{ $company->legal_name }}</div><?php } ?>
