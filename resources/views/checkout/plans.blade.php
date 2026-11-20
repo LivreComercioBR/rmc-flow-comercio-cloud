@@ -24,10 +24,10 @@
             <h2 style="margin:0 0 8px">RMC Flow Comércio Local</h2>
             <p class="muted" style="margin-bottom:12px">Licença permanente para 1 computador Windows. A RMC Sites orienta a instalação e a ativação por código.</p>
             <p style="margin:0 0 14px">Pagamento único: <strong>R$ {{ number_format(\App\Models\LocalLicenseOrder::PRICE_CENTS / 100, 2, ',', '.') }}</strong></p>
-            @if(config('services.mercado_pago.local_checkout_enabled'))
-                <button class="btn" type="submit" formaction="{{ route('local-license.start') }}">Comprar edição Local</button>
+            @if(config('services.mercado_pago.checkout_enabled'))
+                <button class="btn" type="submit" formaction="{{ route('local-license.start') }}">Escolher Local · R$ {{ number_format(\App\Models\LocalLicenseOrder::PRICE_CENTS / 100, 2, ',', '.') }}</button>
             @else
-                <a href="{{ route('local-license.show') }}">Ver detalhes da edição Local</a>
+                <p class="muted" style="margin:0">Pagamento online temporariamente indisponível.</p>
             @endif
         </div>
     </form>

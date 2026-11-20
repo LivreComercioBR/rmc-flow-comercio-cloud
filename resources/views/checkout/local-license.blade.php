@@ -18,7 +18,6 @@
         </form>
     @else
         <p>O pagamento online está temporariamente indisponível.</p>
-        <a class="btn" href="https://wa.me/5519990136498">Falar com a RMC Sites</a>
     @endif
 </section>
 @endsection

@@ -7,7 +7,7 @@ A edição Local custa R$ 99,00 em pagamento único. A licença permanente é em
 1. Publique os arquivos do aplicativo pela rotina habitual.
 2. Na raiz da aplicação Laravel, rode `php artisan migrate --force`.
 3. Confirme que `APP_URL` e `MERCADO_PAGO_NOTIFICATION_URL` são HTTPS públicos, e que o Access Token e o segredo do webhook correspondem à mesma aplicação e ao ambiente escolhido. A URL de notificação continua sendo `/mercado-pago/webhook`.
-4. Habilite `MERCADO_PAGO_LOCAL_CHECKOUT_ENABLED=true` na configuração privada e rode `php artisan optimize:clear`. Essa opção habilita somente o checkout Local e começa desabilitada.
+4. O checkout Local usa `MERCADO_PAGO_CHECKOUT_ENABLED`, a mesma configuração usada pelo checkout Cloud. Se o checkout Cloud já está habilitado e o Mercado Pago está configurado, nenhuma alteração no `.env` é necessária. Rode `php artisan config:clear` e `php artisan view:clear` após publicar.
 5. Para conferir o fluxo em sandbox, use um ambiente separado com credenciais de teste e `MERCADO_PAGO_SANDBOX=true`. Se a notificação de teste não chegar, use o simulador de Webhooks do Mercado Pago com o ID do pagamento de teste. Confira o pedido com o comando abaixo. O modo sandbox segue a configuração da integração compartilhada. Evite alterá-lo no Cloud em produção enquanto clientes estiverem usando o checkout.
 6. Após a homologação, habilite a compra em produção e aponte os botões da loja e da página de vendas para `https://sistema.comercio.cloud.rmcsites.com.br/edicao-local`.
 
