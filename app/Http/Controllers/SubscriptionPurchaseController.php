@@ -37,6 +37,8 @@ final class SubscriptionPurchaseController extends Controller
         $data = $request->validate([
             'plan_code' => ['required', 'string', 'max:64', Rule::exists('plans', 'code')->where('active', true)],
             'email' => ['required', 'email:rfc', 'max:190', 'unique:users,email'],
+        ], [
+            'email.unique' => 'Este endereço de e-mail já está cadastrado. Para continuar, use outro e-mail.',
         ]);
         $plan = Plan::query()->where('code', $data['plan_code'])->where('active', true)->firstOrFail();
         $email = mb_strtolower(trim($data['email']));
