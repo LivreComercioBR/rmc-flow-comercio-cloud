@@ -28,8 +28,17 @@ class Company extends Model
     {
         $path = $this->logoPath();
 
-        return $path && Storage::disk('public')->exists($path)
-            ? Storage::disk('public')->url($path)
+        if (! $path) {
+            return null;
+        }
+
+        if (Storage::disk('company_logos')->exists($path)) {
+            return asset('assets/'.$path);
+        }
+
+        // Compatibilidade com logos já enviadas antes da correção do caminho público.
+        return Storage::disk('public')->exists($path)
+            ? asset('public/storage/'.$path)
             : null;
     }
 
