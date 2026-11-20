@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\LocalLicenseOrder;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
@@ -45,3 +46,26 @@ Artisan::command('mercado-pago:preflight', function () {
 
     return $ready ? 0 : 1;
 })->purpose('Confere a configuracao sandbox sem exibir segredos ou iniciar cobrancas');
+
+Artisan::command('comercio-local:pedido {referencia}', function () {
+    $order = LocalLicenseOrder::query()->where('reference', $this->argument('referencia'))->first();
+    if (! $order) {
+        $this->error('Pedido não encontrado.');
+
+        return 1;
+    }
+
+    $this->table(['Referência', 'E-mail da compra', 'Situação', 'Pagamento', 'Confirmação'], [[
+        $order->reference,
+        $order->contact_email,
+        match ($order->status) {
+            'paid' => 'Confirmado',
+            'review' => 'Em análise',
+            default => 'Pendente',
+        },
+        $order->payment_id ?? '—',
+        $order->paid_at?->format('d/m/Y H:i') ?? '—',
+    ]]);
+
+    return 0;
+})->purpose('Consulta o pagamento de uma licença do Comércio Local pela referência do pedido');
