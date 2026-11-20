@@ -1,14 +1,14 @@
-@extends('layouts.app', ['title' => 'Planos | RMC Flow Comércio Cloud'])
+@extends('layouts.app', ['title' => 'Contratação | RMC Flow Comércio'])
 @section('content')
 <section class="card narrow" style="max-width:760px">
-    <p class="muted" style="margin-bottom:8px">RMC FLOW COMÉRCIO CLOUD</p>
-    <h1 class="title">Escolha o plano ideal para sua empresa</h1>
-    <p class="muted">Pague com segurança pelo Mercado Pago. Após a confirmação, você cadastra a empresa e cria o acesso do administrador.</p>
+    <p class="muted" style="margin-bottom:8px">RMC FLOW COMÉRCIO</p>
+    <h1 class="title">Escolha a edição ideal para sua empresa</h1>
+    <p class="muted">Pague pelo Mercado Pago. Com um plano Cloud, você cadastra sua empresa e cria o acesso online após a confirmação. A edição Local é instalada e ativada em um computador Windows.</p>
     @if($errors->has('checkout'))<div class="alert alert-danger">{{ $errors->first('checkout') }}</div>@endif
     <form method="post" action="{{ route('checkout.start') }}">
         @csrf
         <div class="field">
-            <label for="email">E-mail para receber o acesso</label>
+            <label for="email">E-mail da compra</label>
             <input id="email" name="email" type="email" value="{{ old('email') }}" maxlength="190" autocomplete="email" required>
             @error('email')<div class="error">{{ $message }}</div>@enderror
         </div>
@@ -20,6 +20,16 @@
                 <button class="btn" type="submit" name="plan_code" value="{{ $plan->code }}">Escolher {{ str_contains($plan->name, 'Equipe') ? 'Equipe' : 'Essencial' }} · R$ {{ number_format($plan->initial_price_cents / 100, 2, ',', '.') }}</button>
             </div>
         @endforeach
+        <div class="company" style="display:block;margin:14px 0">
+            <h2 style="margin:0 0 8px">RMC Flow Comércio Local</h2>
+            <p class="muted" style="margin-bottom:12px">Licença permanente para 1 computador Windows. A RMC Sites orienta a instalação e a ativação por código.</p>
+            <p style="margin:0 0 14px">Pagamento único: <strong>R$ {{ number_format(\App\Models\LocalLicenseOrder::PRICE_CENTS / 100, 2, ',', '.') }}</strong></p>
+            @if(config('services.mercado_pago.local_checkout_enabled'))
+                <button class="btn" type="submit" formaction="{{ route('local-license.start') }}">Comprar edição Local</button>
+            @else
+                <a href="{{ route('local-license.show') }}">Ver detalhes da edição Local</a>
+            @endif
+        </div>
     </form>
     <p class="muted" style="margin:20px 0 0">Já possui uma conta? <a href="{{ route('login') }}">Entrar</a></p>
 </section>
