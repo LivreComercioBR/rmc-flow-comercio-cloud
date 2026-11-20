@@ -47,6 +47,16 @@ return [
             'report' => false,
         ],
 
+        // No HostGator, a raiz do repositório é também a raiz pública do domínio.
+        'company_logos' => [
+            'driver' => 'local',
+            'root' => base_path('assets'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/assets',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

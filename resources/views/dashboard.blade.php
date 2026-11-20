@@ -50,7 +50,7 @@
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
                 @if($supportEmail)<a href="mailto:{{ $supportEmail }}" style="color:#eafffa">{{ $supportEmail }}</a>@endif
                 @if($supportWhatsapp)<a class="btn" href="https://wa.me/{{ preg_replace('/\D+/', '', $supportWhatsapp) }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#00c875;border-color:#00e58a;color:#052b24">
-                    <img src="{{ asset('images/whatsapp-icon.svg') }}" alt="" width="22" height="22" style="display:block">
+                    <img src="{{ asset('assets/whatsapp-icon.svg') }}" alt="" width="22" height="22" style="display:block">
                     <span>Falar pelo WhatsApp</span>
                 </a>@endif
             </div>
