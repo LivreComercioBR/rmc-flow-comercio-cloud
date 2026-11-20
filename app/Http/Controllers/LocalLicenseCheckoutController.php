@@ -15,13 +15,13 @@ final class LocalLicenseCheckoutController extends Controller
     public function show(): Response
     {
         return response()->view('checkout.local-license', [
-            'enabled' => config('services.mercado_pago.local_checkout_enabled'),
+            'enabled' => config('services.mercado_pago.checkout_enabled'),
         ]);
     }
 
     public function start(Request $request, PaymentGateway $gateway): RedirectResponse
     {
-        abort_unless(config('services.mercado_pago.local_checkout_enabled'), 503);
+        abort_unless(config('services.mercado_pago.checkout_enabled'), 503);
 
         $data = $request->validate(['email' => ['required', 'email:rfc', 'max:190']]);
         $token = Str::random(64);

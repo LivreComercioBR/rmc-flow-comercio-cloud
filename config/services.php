@@ -41,7 +41,6 @@ return [
         'notification_url' => env('MERCADO_PAGO_NOTIFICATION_URL'),
         'activate_approved_payments' => env('MERCADO_PAGO_ACTIVATE_APPROVED_PAYMENTS', false),
         'checkout_enabled' => env('MERCADO_PAGO_CHECKOUT_ENABLED', false),
-        'local_checkout_enabled' => env('MERCADO_PAGO_LOCAL_CHECKOUT_ENABLED', false),
         'sandbox' => env('MERCADO_PAGO_SANDBOX', true),
         'plan_code' => env('MERCADO_PAGO_PLAN_CODE', 'comercio-cloud-essencial'),
     ],
