@@ -2,19 +2,13 @@
 @section('content')
 <style>@media print{body{background:#fff}.top,.footer,.no-print{display:none!important}.container{width:100%;max-width:none;margin:0}.card{border:0;box-shadow:none;padding:0}}</style>
 <section class="card">
-    <div style="max-width:950px;margin:0 auto 22px;border-bottom:2px solid #102c4d;padding-bottom:16px;display:flex;align-items:center;gap:18px">
-        <div style="width:82px;height:82px;flex:0 0 auto;display:flex;align-items:center;justify-content:center">@if($logoUrl)<img src="{{ $logoUrl }}" alt="Logo de {{ $company->trade_name }}" style="width:100%;height:100%;object-fit:contain">@endif</div>
-        <div>
-            <h2 style="margin:0 0 8px">{{ $company->trade_name }}</h2>
-            @if ($company->legal_name)<div>{{ $company->legal_name }}</div>@endif
-            @if ($company->document)<div>Documento: {{ $company->document }}</div>@endif
-            @if ($company->phone)<div>Telefone: {{ $company->phone }}</div>@endif
-            @if ($addressText !== '')<div>{{ $addressText }}</div>@endif
-        </div>
+    <div class="document-header">
+        @include('components.company-document-brand', ['company' => $company, 'logoUrl' => $logoUrl, 'addressText' => $addressText])
+        <div class="document-meta"><strong>VENDA #{{ $sale->sale_number }}</strong><div>Emitida em {{ $sale->sold_at->format('d/m/Y H:i') }}</div><?php if ($sale->status === 'cancelled') { ?><div>Cancelada</div><?php } ?></div>
     </div>
     @if (session('sale_notice'))<div class="alert no-print alert-success">{{ session('sale_notice') }}</div>@endif
     @if ($errors->any())<div class="alert no-print alert-danger" role="alert">{{ $errors->first() }}</div>@endif
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap"><div><p class="muted">VENDA</p><h1 class="title">Venda #{{ $sale->sale_number }} @if($sale->status === 'cancelled')<span style="color:#b42318">(Cancelada)</span>@endif</h1><p class="muted">{{ $sale->sold_at->format('d/m/Y H:i') }}</p></div><div class="actions no-print"><a class="btn secondary" href="{{ route('sales.index') }}">Voltar às vendas</a><button class="btn secondary" type="button" onclick="window.print()">Imprimir / Salvar PDF</button><a class="btn" href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer">Preparar envio pelo WhatsApp</a><a class="btn secondary" href="{{ route('sales.create') }}">Nova venda</a></div></div>
+    <div class="document-controls no-print"><div><p class="muted">VENDA</p><h1 class="title">Venda #{{ $sale->sale_number }} @if($sale->status === 'cancelled')<span style="color:#b42318">(Cancelada)</span>@endif</h1><p class="muted">{{ $sale->sold_at->format('d/m/Y H:i') }}</p></div><div class="actions"><a class="btn secondary" href="{{ route('sales.index') }}">Voltar às vendas</a><button class="btn secondary" type="button" onclick="window.print()">Imprimir / Salvar PDF</button><a class="btn" href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer">Preparar envio pelo WhatsApp</a><a class="btn secondary" href="{{ route('sales.create') }}">Nova venda</a></div></div>
     <div style="margin:22px 0">
         <strong>Cliente</strong>
         <div>{{ $sale->customer?->name ?? 'Consumidor' }}</div>
