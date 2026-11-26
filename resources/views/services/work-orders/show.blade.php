@@ -23,30 +23,11 @@
     <?php } ?>
 
     <div style="max-width:950px;margin:22px auto">
-        <div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-bottom:2px solid #102c4d;padding-bottom:16px">
-            <div style="display:flex;align-items:center;gap:16px">
-                <div style="width:76px;height:76px;flex:0 0 auto;display:flex;align-items:center;justify-content:center">@if($logoUrl)<img src="{{ $logoUrl }}" alt="Logo de {{ $company->trade_name }}" style="width:100%;height:100%;object-fit:contain">@endif</div>
-                <div>
-                    <h2 style="margin:0 0 8px">{{ $company->trade_name }}</h2>
-                    <?php if ($company->legal_name) { ?><div>{{ $company->legal_name }}</div><?php } ?>
-                    <?php if ($company->document) { ?><div>Documento: {{ $company->document }}</div><?php } ?>
-                    <?php if ($company->phone) { ?><div>Telefone: {{ $company->phone }}</div><?php } ?>
-                    <?php if ($addressText) { ?><div>{{ $addressText }}</div><?php } ?>
-                </div>
-            </div>
-            <div>
-                <strong>Cliente:</strong> {{ $order->customer->name }}<br>
-                <?php if ($order->customer->document) { ?><div>{{ $order->customer->document }}</div><?php } ?>
-                <?php if ($order->customer->phone) { ?><div>{{ $order->customer->phone }}</div><?php } ?>
-            </div>
-            <div>
-                <strong>Situação:</strong> {{ $statuses[$order->status] ?? $order->status }}<br>
-                <strong>Aberta em:</strong> {{ $order->opened_at->format('d/m/Y H:i') }}
-                <?php if ($order->quote) { ?><br><strong>Orçamento:</strong> #{{ str_pad((string) $order->quote->quote_number, 5, '0', STR_PAD_LEFT) }}<?php } ?>
-                <?php if ($order->finalized_at) { ?><br><strong>Finalizada em:</strong> {{ $order->finalized_at->format('d/m/Y H:i') }}<?php } ?>
-            </div>
+        <div class="document-header">
+            @include('components.company-document-brand', ['company' => $company, 'logoUrl' => $logoUrl, 'addressText' => $addressText])
+            <div class="document-meta"><strong>ORDEM DE SERVIÇO #{{ str_pad((string) $order->work_order_number, 5, '0', STR_PAD_LEFT) }}</strong><div>Situação: {{ $statuses[$order->status] ?? $order->status }}</div><div>Aberta em {{ $order->opened_at->format('d/m/Y H:i') }}</div><?php if ($order->quote) { ?><div>Orçamento: #{{ str_pad((string) $order->quote->quote_number, 5, '0', STR_PAD_LEFT) }}</div><?php } ?><?php if ($order->finalized_at) { ?><div>Finalizada em {{ $order->finalized_at->format('d/m/Y H:i') }}</div><?php } ?></div>
         </div>
-
+        <div class="document-customer"><strong>Cliente</strong><div>{{ $order->customer->name }}</div><?php if ($order->customer->document) { ?><div>{{ $order->customer->document }}</div><?php } ?><?php if ($order->customer->phone) { ?><div>{{ $order->customer->phone }}</div><?php } ?></div>
         <?php if ($order->asset_description || $order->asset_identifier || $order->asset_type) { ?>
             <div style="margin:18px 0">
                 <strong>Veículo / equipamento</strong>
