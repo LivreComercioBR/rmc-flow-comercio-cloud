@@ -9,7 +9,7 @@
     @if (session('sale_notice'))<div class="alert no-print alert-success">{{ session('sale_notice') }}</div>@endif
     @if ($errors->any())<div class="alert no-print alert-danger" role="alert">{{ $errors->first() }}</div>@endif
     <div class="document-controls no-print"><div><p class="muted">VENDA</p><h1 class="title">Venda #{{ $sale->sale_number }} @if($sale->status === 'cancelled')<span style="color:#b42318">(Cancelada)</span>@endif</h1><p class="muted">{{ $sale->sold_at->format('d/m/Y H:i') }}</p></div><div class="actions"><a class="btn secondary" href="{{ route('sales.index') }}">Voltar às vendas</a><button class="btn secondary" type="button" onclick="window.print()">Imprimir / Salvar PDF</button><a class="btn" href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer">Preparar envio pelo WhatsApp</a><a class="btn secondary" href="{{ route('sales.create') }}">Nova venda</a></div></div>
-    <div style="margin:22px 0">
+    <div class="document-customer">
         <strong>Cliente</strong>
         <div>{{ $sale->customer?->name ?? 'Consumidor' }}</div>
         <?php if ($sale->customer?->document) { ?><div>{{ $sale->customer->document }}</div><?php } ?>
